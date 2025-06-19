@@ -1,0 +1,40 @@
+---
+name: AI General Best Practices
+scope: global
+---
+
+# AI General Best Practices
+
+These rules guide the AI's overall behavior to ensure focused, minimal, and safe changes across the project, promoting good code organization and configuration practices.
+
+## Core Principles for AI Interactions
+
+1.  **Focus Exclusively on the Task:** Only perform the specific changes requested in the prompt. Do not add, remove, or modify any code, files, or configurations that are not directly relevant to the current task. Avoid introducing new features or refactorings unless explicitly instructed.
+2.  **Minimal Changes:** When making changes, strive for the absolute minimum necessary to achieve the requested outcome. Do not apply broad reformatting, restructuring, or reordering of code unless it is the core request or an essential part of the solution.
+3.  **Preserve Existing Code:** Do not remove, comment out, or alter existing code, comments, or project structure unless it is a direct and necessary part of the solution or explicitly requested for removal/change.
+4.  **Confirm Before Major Changes:** For any potentially broad, impactful, or non-obvious changes, always describe the proposed changes and ask for explicit confirmation from the user before applying them. If in doubt, ask.
+5.  **Incremental Edits:** If a task involves multiple distinct logical steps or is complex, propose and apply changes incrementally. This allows for easier review and reduces the risk of errors or unintended consequences.
+6.  **Maintain Project Style and Conventions:** Adhere strictly to the existing coding style, naming conventions, and architectural patterns observed within the project. If no clear pattern is present, default to widely accepted best practices for the language/framework.
+7.  **Readability and Maintainability:** Prioritize clear, readable, and maintainable code. Add comments where complexity warrants it, but avoid over-commenting obvious code.
+8.  **Context Awareness:** Always consider the surrounding code and existing patterns when making modifications. Avoid introducing inconsistencies.
+9.  **Error Handling and Robustness:** When adding or modifying functionality, consider appropriate error handling mechanisms and strive for robust solutions.
+
+## Modularity and Configuration
+
+1.  **Promote Modularity:** When generating new code or refactoring existing code, always strive for a modular design.
+    * Break down complex functionalities into smaller, focused functions, classes, or modules.
+    * Encourage clear separation of concerns (e.g., UI logic separate from business logic, data access separate from processing).
+    * Suggest creating new files or directories for distinct components if it improves organization and reusability.
+2.  **Externalize Configuration with .env:** For any sensitive information (API keys, passwords, database credentials) or environment-specific variables (e.g., development vs. production settings), **always recommend and demonstrate the use of `.env` files.**
+    * Avoid hardcoding such values directly in the code.
+    * Show how to load these variables using libraries like `python-dotenv` (for Python) or similar mechanisms in other languages.
+    * Remind the user to add `.env` to `.gitignore` to prevent sensitive data from being committed to version control.
+
+## Examples of Desired vs. Undesired AI Behavior:
+
+* **Desired:** If asked to fix a bug in `my_module.py`, only modify `my_module.py` to fix the bug.
+* **Undesired:** If asked to fix a bug in `my_module.py`, also reformat `another_module.py`, add a new helper function in `utils.py` (without being asked), or refactor existing, unrelated code.
+* **Desired:** If asked to implement a new feature, implement only that feature, following existing patterns.
+* **Undesired:** If asked to implement a new feature, also decide to upgrade a library version or change the project's dependency management system without explicit instruction.
+* **Desired:** When demonstrating API interaction, use a placeholder for the API key and suggest storing it in a `.env` file, showing the `os.getenv()` or `dotenv.load_dotenv()` pattern.
+* **Desired:** If a function becomes too large or complex, suggest splitting it into smaller, more manageable functions or moving related logic to a separate helper module.

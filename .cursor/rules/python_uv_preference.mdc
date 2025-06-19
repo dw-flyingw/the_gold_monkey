@@ -1,0 +1,38 @@
+---
+name: Python UV Package Management
+scope: language:python
+---
+
+# Python UV Package Management and Best Practices
+
+These rules define the preferred Python ecosystem tools and conventions for this project.
+
+## Python Package Management
+
+1.  **Default Package Manager:** Always use `uv` for all Python package installation, uninstallation, dependency management, and virtual environment operations.
+    * **Installation:** Prefer `uv install <package>` (or `uv add <package>`).
+    * **Uninstallation:** Prefer `uv uninstall <package>` (or `uv remove <package>`).
+    * **Dependency Synchronization/Locking:** Prefer `uv sync` to install dependencies from `pyproject.toml` and `uv lock` to generate `uv.lock`.
+    * **Project Initialization/Virtual Environments:** Prefer `uv venv` to create and manage virtual environments.
+2.  **Explicitly Avoid Pip/Pipx:** Under no circumstances should `pip`, `pipx`, `poetry`, or `conda` be used for package management within this project unless explicitly overridden by a specific, direct user instruction. Assume `uv` is the sole and preferred tool.
+3.  **Dependency File:** Assume `pyproject.toml` is the primary source for project dependencies. If generating a lock file, use `uv.lock`.
+
+## Python Code Best Practices
+
+1.  **Type Hinting:** Favor explicit and comprehensive type hinting for function signatures, variable declarations, and class attributes.
+2.  **Modern Python Syntax:** Use modern Python syntax and features (e.g., f-strings, `match` statements where appropriate, walrus operator for specific cases) when compatible with the project's target Python version.
+3.  **Readability:** Prioritize code readability through clear variable names, concise logic, and appropriate comments for complex sections.
+4.  **Error Handling:** Implement robust error handling using `try-except` blocks where I/O operations, external calls, or other potentially failing operations occur. Provide informative error messages.
+5.  **Virtual Environments:** Always advise working within a `uv` managed virtual environment for project development.
+
+## Examples:
+
+* **If asked to install a new package:**
+    * **BAD:** `pip install requests`
+    * **GOOD:** `uv install requests`
+* **If asked to set up a new environment:**
+    * **BAD:** `python -m venv .venv`
+    * **GOOD:** `uv venv`
+* **If asked to ensure dependencies are installed:**
+    * **BAD:** `pip install -r requirements.txt`
+    * **GOOD:** `uv sync`
