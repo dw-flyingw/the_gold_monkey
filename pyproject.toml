@@ -20,4 +20,6 @@ dependencies = [
     "markdown>=3.5.0",
     "plotly>=5.0.0",
     "mcp[cli]>=1.9.4",
+    "spotipy>=2.23.0",
+    "psutils>=3.3.10",
 ]

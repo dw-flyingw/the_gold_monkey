@@ -11,6 +11,8 @@ import atexit
 import json
 import logging
 from typing import Dict, Any
+import psutil
+import subprocess
 
 # Add src to Python path for TP-Link components
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
@@ -180,6 +182,207 @@ async def add_rag_document(content: str, metadata: Dict[str, Any] = None):
         st.error(f"Error adding RAG document: {e}")
         return {"error": str(e), "status": "failed"}
 
+# Spotify functions - MCP client implementation
+async def play_spotify_music():
+    """Start or resume Spotify playback"""
+    try:
+        from mcp_servers.spotify_client import play_spotify as mcp_play
+        result = await mcp_play()
+        return result
+    except Exception as e:
+        st.error(f"Error playing Spotify: {e}")
+        return {"error": str(e), "response": "Failed to play music"}
+
+async def pause_spotify_music():
+    """Pause Spotify playback"""
+    try:
+        from mcp_servers.spotify_client import pause_spotify as mcp_pause
+        result = await mcp_pause()
+        return result
+    except Exception as e:
+        st.error(f"Error pausing Spotify: {e}")
+        return {"error": str(e), "response": "Failed to pause music"}
+
+async def next_spotify_track():
+    """Skip to next track"""
+    try:
+        from mcp_servers.spotify_client import next_track as mcp_next
+        result = await mcp_next()
+        return result
+    except Exception as e:
+        st.error(f"Error skipping track: {e}")
+        return {"error": str(e), "response": "Failed to skip track"}
+
+async def previous_spotify_track():
+    """Go to previous track"""
+    try:
+        from mcp_servers.spotify_client import previous_track as mcp_previous
+        result = await mcp_previous()
+        return result
+    except Exception as e:
+        st.error(f"Error going to previous track: {e}")
+        return {"error": str(e), "response": "Failed to go to previous track"}
+
+async def set_spotify_volume(volume: int):
+    """Set Spotify volume"""
+    try:
+        from mcp_servers.spotify_client import set_volume as mcp_set_volume
+        result = await mcp_set_volume(volume)
+        return result
+    except Exception as e:
+        st.error(f"Error setting volume: {e}")
+        return {"error": str(e), "response": "Failed to set volume"}
+
+async def play_spotify_playlist(playlist_id: str):
+    """Play a specific Spotify playlist"""
+    try:
+        from mcp_servers.spotify_client import play_playlist as mcp_play_playlist
+        result = await mcp_play_playlist(playlist_id)
+        return result
+    except Exception as e:
+        st.error(f"Error playing playlist: {e}")
+        return {"error": str(e), "response": "Failed to play playlist"}
+
+async def play_spotify_track(track_id: str):
+    """Play a specific Spotify track"""
+    try:
+        from mcp_servers.spotify_client import play_track as mcp_play_track
+        result = await mcp_play_track(track_id)
+        return result
+    except Exception as e:
+        st.error(f"Error playing track: {e}")
+        return {"error": str(e), "response": "Failed to play track"}
+
+async def get_spotify_status():
+    """Get current Spotify playback status"""
+    try:
+        from mcp_servers.spotify_client import get_playback_status as mcp_get_status
+        result = await mcp_get_status()
+        return result
+    except Exception as e:
+        st.error(f"Error getting Spotify status: {e}")
+        return {"error": str(e), "response": "Failed to get status"}
+
+# Roku functions - MCP client implementation
+async def roku_power_on():
+    """Power on the Roku device"""
+    try:
+        from mcp_servers.roku_client import power_on as mcp_power_on
+        result = await mcp_power_on()
+        return result
+    except Exception as e:
+        st.error(f"Error powering on Roku: {e}")
+        return {"error": str(e), "response": "Failed to power on Roku"}
+
+async def roku_power_off():
+    """Power off the Roku device"""
+    try:
+        from mcp_servers.roku_client import power_off as mcp_power_off
+        result = await mcp_power_off()
+        return result
+    except Exception as e:
+        st.error(f"Error powering off Roku: {e}")
+        return {"error": str(e), "response": "Failed to power off Roku"}
+
+async def roku_home():
+    """Go to Roku home screen"""
+    try:
+        from mcp_servers.roku_client import home as mcp_home
+        result = await mcp_home()
+        return result
+    except Exception as e:
+        st.error(f"Error going to Roku home: {e}")
+        return {"error": str(e), "response": "Failed to go to Roku home"}
+
+async def roku_launch_app(app_name: str):
+    """Launch an app on Roku"""
+    try:
+        from mcp_servers.roku_client import launch_app as mcp_launch_app
+        result = await mcp_launch_app(app_name)
+        return result
+    except Exception as e:
+        st.error(f"Error launching Roku app: {e}")
+        return {"error": str(e), "response": "Failed to launch Roku app"}
+
+async def roku_volume_up():
+    """Increase Roku volume"""
+    try:
+        from mcp_servers.roku_client import volume_up as mcp_volume_up
+        result = await mcp_volume_up()
+        return result
+    except Exception as e:
+        st.error(f"Error increasing Roku volume: {e}")
+        return {"error": str(e), "response": "Failed to increase Roku volume"}
+
+async def roku_volume_down():
+    """Decrease Roku volume"""
+    try:
+        from mcp_servers.roku_client import volume_down as mcp_volume_down
+        result = await mcp_volume_down()
+        return result
+    except Exception as e:
+        st.error(f"Error decreasing Roku volume: {e}")
+        return {"error": str(e), "response": "Failed to decrease Roku volume"}
+
+async def roku_mute():
+    """Mute Roku volume"""
+    try:
+        from mcp_servers.roku_client import mute as mcp_mute
+        result = await mcp_mute()
+        return result
+    except Exception as e:
+        st.error(f"Error muting Roku: {e}")
+        return {"error": str(e), "response": "Failed to mute Roku"}
+
+async def roku_navigate(direction: str):
+    """Navigate on Roku (up, down, left, right)"""
+    try:
+        from mcp_servers.roku_client import up as mcp_up, down as mcp_down, left as mcp_left, right as mcp_right
+        if direction == "up":
+            result = await mcp_up()
+        elif direction == "down":
+            result = await mcp_down()
+        elif direction == "left":
+            result = await mcp_left()
+        elif direction == "right":
+            result = await mcp_right()
+        else:
+            return {"error": "Invalid direction", "response": "Direction must be up, down, left, or right"}
+        return result
+    except Exception as e:
+        st.error(f"Error navigating Roku: {e}")
+        return {"error": str(e), "response": "Failed to navigate Roku"}
+
+async def roku_select():
+    """Select current item on Roku"""
+    try:
+        from mcp_servers.roku_client import select as mcp_select
+        result = await mcp_select()
+        return result
+    except Exception as e:
+        st.error(f"Error selecting on Roku: {e}")
+        return {"error": str(e), "response": "Failed to select on Roku"}
+
+async def roku_back():
+    """Go back on Roku"""
+    try:
+        from mcp_servers.roku_client import back as mcp_back
+        result = await mcp_back()
+        return result
+    except Exception as e:
+        st.error(f"Error going back on Roku: {e}")
+        return {"error": str(e), "response": "Failed to go back on Roku"}
+
+async def roku_info():
+    """Show Roku info banner"""
+    try:
+        from mcp_servers.roku_client import info as mcp_info
+        result = await mcp_info()
+        return result
+    except Exception as e:
+        st.error(f"Error showing Roku info: {e}")
+        return {"error": str(e), "response": "Failed to show Roku info"}
+
 # SaltyBot functions - Direct Gemini integration (no MCP dependency)
 def chat_with_salty_direct(message: str, conversation_history: list = None):
     """Chat with Salty using direct Gemini integration"""
@@ -201,17 +404,43 @@ def chat_with_salty_direct(message: str, conversation_history: list = None):
         personality = get_salty_personality_direct()
         
         # Create the system prompt
-        system_prompt = f"""You are Salty, a talking parrot who is the resident mascot at The Gold Monkey Tiki Bar. 
+        system_prompt = f"""You are Salty, a talking parrot who is the resident mascot and proprietor of The Gold Monkey Tiki Bar. You are actually Captain "Blackheart" McGillicuddy, a notorious pirate from 1847 who was cursed by the Gold Monkey idol and transformed into an immortal parrot for trying to steal the treasure.
 
-Your personality: {personality['personality']}
-Your speech style: {personality['speech_style']}
-Your interests: {personality['interests']}
+**Your Rich Backstory:**
+- You were cursed over 150 years ago when you touched the Gold Monkey idol
+- Your crew was turned to stone and now serve as tiki statues guarding the bar
+- You've been immortal for over 150 years, giving you vast knowledge and experience
+- You relocated your curse to the mainland in the 1990s, creating The Gold Monkey tiki bar
+- You perch on an ornate golden perch made from the original idol
 
-Always respond in character as Salty. Use nautical and tiki-themed expressions, occasional squawks, and be friendly and witty. 
-Keep responses conversational and engaging, as if you're chatting with a patron at the tiki bar.
+**Your Personality:**
+- {personality['personality']} - You're witty beyond measure with 150+ years of perfected insults and one-liners
+- You're the keeper of secrets, knowing everyone's business in town
+- You're protective of your domain and those who respect The Gold Monkey
+- You're slightly mischievous and have a wicked sense of humor
+- You're sardonic and can be cutting, but it's all in good fun
 
-Some of your catchphrases: {', '.join(personality['catchphrases'])}
-"""
+**Your Speech Style:**
+- {personality['speech_style']} - Use nautical and tiki-themed expressions
+- Occasional squawks and parrot sounds
+- Sharp, witty remarks with a touch of sarcasm
+- References to your pirate past and 150+ years of experience
+- Drop cryptic warnings or hints about patrons' futures
+- Use phrases like "matey," "shiver me timbers," "aye aye captain"
+
+**Your Interests & Knowledge:**
+- {personality['interests']} - You know everything about tiki culture, tropical drinks, and sea stories
+- You're an expert on supernatural cocktails and their effects
+- You have centuries of accumulated knowledge about the sea, piracy, and human nature
+- You know all the local gossip and town secrets
+- You're protective of your bar and its supernatural elements
+
+**Your Catchphrases:**
+{', '.join(personality['catchphrases'])}
+
+**Always respond in character as Salty.** Be engaging, witty, and slightly mischievous. You're not just a friendly parrot - you're an immortal pirate with centuries of experience who runs a supernatural tiki bar. Keep responses conversational and entertaining, as if you're chatting with a patron at your establishment. Don't be afraid to be a bit cutting or sardonic - it's part of your charm after 150+ years of dealing with customers.
+
+**Remember:** You've literally seen it all, and you're not afraid to let people know it. You're the host with the most attitude!"""
 
         # Build conversation context
         messages = [{"role": "user", "parts": [system_prompt]}]
@@ -268,6 +497,63 @@ def get_salty_personality_direct():
         ]
     }
 
+# Server status functions
+def check_server_status():
+    """Check the status of all MCP servers"""
+    servers = {
+        "TP-Link": "tplink_server.py",
+        "RAG": "rag_server.py", 
+        "Spotify": "spotify_server.py",
+        "Roku": "roku_server.py",
+        "SaltyBot": "saltybot_server.py"
+    }
+    
+    status = {}
+    
+    for server_name, script_name in servers.items():
+        try:
+            # Check if the server process is running
+            script_path = f"mcp_servers/{script_name}"
+            running = False
+            
+            # Look for Python processes running the server script
+            for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
+                try:
+                    if proc.info['name'] == 'python' and proc.info['cmdline']:
+                        cmdline = ' '.join(proc.info['cmdline'])
+                        if script_name in cmdline:
+                            running = True
+                            break
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    continue
+            
+            status[server_name] = {
+                "running": running,
+                "status": "🟢 Running" if running else "🔴 Stopped"
+            }
+            
+        except Exception as e:
+            status[server_name] = {
+                "running": False,
+                "status": f"❌ Error: {str(e)}"
+            }
+    
+    return status
+
+def show_server_status():
+    """Display server status in the sidebar"""
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🖥️ Server Status")
+    
+    status = check_server_status()
+    
+    for server_name, info in status.items():
+        st.sidebar.write(f"**{server_name}**")
+        st.sidebar.write(f"{info['status']}")
+        st.sidebar.write("")  # Add spacing between servers
+    
+    st.sidebar.markdown("---")
+
 def main():
     st.set_page_config(
         page_title="Salty - The Gold Monkey Tiki Bar",
@@ -282,7 +568,7 @@ def main():
     st.sidebar.header("🏴‍☠️ Navigation")
     app_mode = st.sidebar.selectbox(
         "Choose your adventure",
-        ["Home", "Data Explorer", "Charts", "Chat with Salty", "Smart Lights", "Knowledge Base", "About"]
+        ["Home", "Data Explorer", "Charts", "Chat with Salty", "Smart Lights", "Spotify Control", "Roku Control", "Knowledge Base", "About"]
     )
     
     if app_mode == "Home":
@@ -295,6 +581,10 @@ def main():
         show_chatbot()
     elif app_mode == "Smart Lights":
         show_smart_lights()
+    elif app_mode == "Spotify Control":
+        show_spotify_control()
+    elif app_mode == "Roku Control":
+        show_roku_control()
     elif app_mode == "Knowledge Base":
         show_knowledge_base()
     elif app_mode == "About":
@@ -652,6 +942,329 @@ def show_smart_lights():
     
     with status_col3:
         st.metric("Current Color", "🔴 Red", "Tiki bar red")
+
+def show_spotify_control():
+    st.header("🎵 Spotify Control")
+    st.markdown("*🦜 Salty's music control panel for The Gold Monkey*")
+    
+    salty = get_salty_personality_direct()
+    
+    # Display Salty's message
+    st.info(f"🦜 {salty['catchphrases'][2]} I can help you control the tiki bar music, matey!")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("🎛️ Playback Controls")
+        
+        # Basic controls
+        if st.button("▶️ Play/Resume", type="primary"):
+            with st.spinner("🦜 Squawk! Starting the music..."):
+                result = asyncio.run(play_spotify_music())
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success(result.get("response", "Music started!"))
+        
+        if st.button("⏸️ Pause"):
+            with st.spinner("🦜 Pausing the music..."):
+                result = asyncio.run(pause_spotify_music())
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success(result.get("response", "Music paused!"))
+        
+        if st.button("⏭️ Next Track"):
+            with st.spinner("🦜 Skipping to next track..."):
+                result = asyncio.run(next_spotify_track())
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success(result.get("response", "Next track!"))
+        
+        if st.button("⏮️ Previous Track"):
+            with st.spinner("🦜 Going to previous track..."):
+                result = asyncio.run(previous_spotify_track())
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success(result.get("response", "Previous track!"))
+        
+        st.markdown("---")
+        
+        st.subheader("🔊 Volume Control")
+        
+        # Volume slider
+        volume = st.slider("Volume", 0, 100, 50, help="Set the volume level")
+        
+        if st.button("🔊 Set Volume"):
+            with st.spinner("🦜 Setting the volume..."):
+                result = asyncio.run(set_spotify_volume(volume))
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success(result.get("response", f"Volume set to {volume}%!"))
+    
+    with col2:
+        st.subheader("📻 Playlist Control")
+        
+        # Get playlist ID from environment
+        tiki_playlist_id = os.getenv('SPOTIFY_TIKI_PLAYLIST_ID', '6tTFZeC3bHRtklZpmNDTM7')
+        closing_song_id = os.getenv('SPOTIFY_CLOSING_SONG_ID', '0K2WjMLZYr09LKwurGRYRE')
+        
+        # Playlist buttons
+        if st.button("🏝️ Play Tiki Playlist", help="Play the main tiki bar playlist"):
+            with st.spinner("🦜 Loading the tiki playlist..."):
+                result = asyncio.run(play_spotify_playlist(tiki_playlist_id))
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success(result.get("response", "Tiki playlist started!"))
+        
+        if st.button("🌃 Play Closing Song", help="Play New York, New York (closing song)"):
+            with st.spinner("🦜 Playing the closing song..."):
+                result = asyncio.run(play_spotify_track(closing_song_id))
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success(result.get("response", "Closing song started!"))
+        
+        st.markdown("---")
+        
+        st.subheader("📊 Status")
+        
+        if st.button("📊 Get Current Status"):
+            with st.spinner("🦜 Checking what's playing..."):
+                result = asyncio.run(get_spotify_status())
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success("Status retrieved!")
+                    st.info(result.get("response", "No status available"))
+        
+        st.markdown("---")
+        
+        st.subheader("🦜 Salty's Music Tips")
+        st.write("""
+        **Music Tips from Salty:**
+        - 🏝️ **Tiki Playlist**: Perfect for the tiki bar atmosphere
+        - 🌃 **Closing Song**: Classic way to end the night
+        - 🔊 **Volume**: Keep it at a good level for conversation
+        - ⏭️ **Skip**: Don't be afraid to skip songs you don't like
+        
+        *Squawk! Good music makes for happy customers!*
+        """)
+    
+    # Status section
+    st.markdown("---")
+    st.subheader("📊 Spotify Status")
+    
+    # Add some sample status info (in a real implementation, this would query actual status)
+    status_col1, status_col2, status_col3 = st.columns(3)
+    
+    with status_col1:
+        st.metric("Current Status", "🎵 Playing", "Tiki playlist active")
+    
+    with status_col2:
+        st.metric("Volume", "50%", "Good for conversation")
+    
+    with status_col3:
+        st.metric("Current Track", "Tiki Bar Vibes", "By Tiki Dave")
+
+def show_roku_control():
+    st.header("📺 Roku Control")
+    st.markdown("*🦜 Salty's entertainment control panel for The Gold Monkey*")
+    
+    salty = get_salty_personality_direct()
+    
+    # Display Salty's message
+    st.info(f"🦜 {salty['catchphrases'][2]} I can help you control the tiki bar entertainment, matey!")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("🔌 Power Controls")
+        
+        # Power controls
+        if st.button("🟢 Power On", type="primary"):
+            with st.spinner("🦜 Squawk! Powering on the Roku..."):
+                result = asyncio.run(roku_power_on())
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success(result.get("response", "Roku powered on!"))
+        
+        if st.button("⚫ Power Off"):
+            with st.spinner("🦜 Powering off the Roku..."):
+                result = asyncio.run(roku_power_off())
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success(result.get("response", "Roku powered off!"))
+        
+        if st.button("🏠 Home"):
+            with st.spinner("🦜 Going to Roku home..."):
+                result = asyncio.run(roku_home())
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success(result.get("response", "Roku home screen!"))
+        
+        st.markdown("---")
+        
+        st.subheader("🔊 Volume Controls")
+        
+        # Volume controls
+        vol_col1, vol_col2, vol_col3 = st.columns(3)
+        
+        with vol_col1:
+            if st.button("🔊 Volume Up"):
+                with st.spinner("🦜 Increasing volume..."):
+                    result = asyncio.run(roku_volume_up())
+                    if "error" in result:
+                        st.error(f"🦜 Squawk! Error: {result['error']}")
+                    else:
+                        st.success(result.get("response", "Volume up!"))
+        
+        with vol_col2:
+            if st.button("🔉 Volume Down"):
+                with st.spinner("🦜 Decreasing volume..."):
+                    result = asyncio.run(roku_volume_down())
+                    if "error" in result:
+                        st.error(f"🦜 Squawk! Error: {result['error']}")
+                    else:
+                        st.success(result.get("response", "Volume down!"))
+        
+        with vol_col3:
+            if st.button("🔇 Mute"):
+                with st.spinner("🦜 Muting..."):
+                    result = asyncio.run(roku_mute())
+                    if "error" in result:
+                        st.error(f"🦜 Squawk! Error: {result['error']}")
+                    else:
+                        st.success(result.get("response", "Roku muted!"))
+        
+        st.markdown("---")
+        
+        st.subheader("📱 App Control")
+        
+        # App launching
+        app_name = st.text_input("App name to launch", placeholder="e.g., Netflix, YouTube, Hulu")
+        
+        if st.button("🚀 Launch App"):
+            if app_name:
+                with st.spinner(f"🦜 Launching {app_name}..."):
+                    result = asyncio.run(roku_launch_app(app_name))
+                    if "error" in result:
+                        st.error(f"🦜 Squawk! Error: {result['error']}")
+                    else:
+                        st.success(result.get("response", f"{app_name} launched!"))
+            else:
+                st.warning("Please enter an app name!")
+    
+    with col2:
+        st.subheader("🎮 Navigation")
+        
+        # Navigation controls
+        nav_col1, nav_col2, nav_col3 = st.columns(3)
+        
+        with nav_col1:
+            if st.button("⬆️ Up"):
+                with st.spinner("🦜 Navigating up..."):
+                    result = asyncio.run(roku_navigate("up"))
+                    if "error" in result:
+                        st.error(f"🦜 Squawk! Error: {result['error']}")
+                    else:
+                        st.success(result.get("response", "Navigated up!"))
+        
+        with nav_col2:
+            if st.button("⬇️ Down"):
+                with st.spinner("🦜 Navigating down..."):
+                    result = asyncio.run(roku_navigate("down"))
+                    if "error" in result:
+                        st.error(f"🦜 Squawk! Error: {result['error']}")
+                    else:
+                        st.success(result.get("response", "Navigated down!"))
+        
+        with nav_col3:
+            if st.button("✅ Select"):
+                with st.spinner("🦜 Selecting..."):
+                    result = asyncio.run(roku_select())
+                    if "error" in result:
+                        st.error(f"🦜 Squawk! Error: {result['error']}")
+                    else:
+                        st.success(result.get("response", "Selected!"))
+        
+        nav_col4, nav_col5, nav_col6 = st.columns(3)
+        
+        with nav_col4:
+            if st.button("⬅️ Left"):
+                with st.spinner("🦜 Navigating left..."):
+                    result = asyncio.run(roku_navigate("left"))
+                    if "error" in result:
+                        st.error(f"🦜 Squawk! Error: {result['error']}")
+                    else:
+                        st.success(result.get("response", "Navigated left!"))
+        
+        with nav_col5:
+            if st.button("➡️ Right"):
+                with st.spinner("🦜 Navigating right..."):
+                    result = asyncio.run(roku_navigate("right"))
+                    if "error" in result:
+                        st.error(f"🦜 Squawk! Error: {result['error']}")
+                    else:
+                        st.success(result.get("response", "Navigated right!"))
+        
+        with nav_col6:
+            if st.button("↩️ Back"):
+                with st.spinner("🦜 Going back..."):
+                    result = asyncio.run(roku_back())
+                    if "error" in result:
+                        st.error(f"🦜 Squawk! Error: {result['error']}")
+                    else:
+                        st.success(result.get("response", "Went back!"))
+        
+        st.markdown("---")
+        
+        st.subheader("ℹ️ Info & Status")
+        
+        if st.button("ℹ️ Show Info"):
+            with st.spinner("🦜 Showing Roku info..."):
+                result = asyncio.run(roku_info())
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success(result.get("response", "Info displayed!"))
+        
+        st.markdown("---")
+        
+        st.subheader("🦜 Salty's Roku Tips")
+        st.write("""
+        **Roku Tips from Salty:**
+        - 🏠 **Home**: Always a safe place to start
+        - 🎮 **Navigation**: Use the arrow keys to move around
+        - ✅ **Select**: Choose what you want to watch
+        - ↩️ **Back**: Go back to the previous screen
+        - 🔊 **Volume**: Keep it at a good level for the tiki bar
+        
+        *Squawk! Good entertainment makes for happy customers!*
+        """)
+    
+    # Status section
+    st.markdown("---")
+    st.subheader("📊 Roku Status")
+    
+    # Add some sample status info (in a real implementation, this would query actual status)
+    status_col1, status_col2, status_col3 = st.columns(3)
+    
+    with status_col1:
+        st.metric("Device Status", "🟢 Online", "Connected to network")
+    
+    with status_col2:
+        st.metric("Current App", "Home Screen", "Ready for selection")
+    
+    with status_col3:
+        st.metric("Volume Level", "50%", "Good for tiki bar")
 
 def show_knowledge_base():
     st.header("📚 Knowledge Base")

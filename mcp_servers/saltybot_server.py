@@ -8,7 +8,7 @@ import asyncio
 import logging
 import os
 from typing import Any, Sequence, Dict, List
-from mcp.server import Server
+from mcp.server.fastmcp import FastMCP
 from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
 from mcp.types import (
@@ -22,14 +22,13 @@ from mcp.types import (
     EmbeddedResource,
     LoggingLevel,
 )
-from mcp.server.lowlevel.server import NotificationOptions
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize the server
-server = Server("saltybot-server")
+server = FastMCP("saltybot-server")
 
 def get_salty_personality():
     """Get Salty's personality and character traits"""
@@ -49,120 +48,8 @@ def get_salty_personality():
         ]
     }
 
-@server.list_tools()
-async def handle_list_tools() -> ListToolsResult:
-    """List available SaltyBot tools"""
-    return ListToolsResult(
-        tools=[
-            Tool(
-                name="chat_with_salty",
-                description="Chat with Salty, the talking parrot from The Gold Monkey Tiki Bar",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "message": {
-                            "type": "string",
-                            "description": "Message to send to Salty"
-                        },
-                        "conversation_history": {
-                            "type": "array",
-                            "description": "Optional conversation history for context",
-                            "items": {
-                                "type": "object",
-                                "properties": {
-                                    "role": {"type": "string"},
-                                    "content": {"type": "string"}
-                                }
-                            }
-                        }
-                    },
-                    "required": ["message"]
-                }
-            ),
-            Tool(
-                name="get_salty_config",
-                description="Get Salty's current configuration",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                }
-            ),
-            Tool(
-                name="get_salty_personality",
-                description="Get information about Salty's personality and character",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                }
-            ),
-            Tool(
-                name="generate_tiki_story",
-                description="Generate a tiki-themed story or anecdote",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "theme": {
-                            "type": "string",
-                            "description": "Theme for the story (e.g., 'pirate', 'tropical', 'bar_tale')",
-                            "default": "tropical"
-                        }
-                    },
-                    "required": []
-                }
-            ),
-            Tool(
-                name="recommend_drink",
-                description="Recommend a tropical drink based on preferences",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "preferences": {
-                            "type": "string",
-                            "description": "Drink preferences (e.g., 'sweet', 'strong', 'fruity', 'classic')",
-                            "default": "classic"
-                        }
-                    },
-                    "required": []
-                }
-            ),
-        ]
-    )
-
-@server.call_tool()
-async def handle_call_tool(name: str, arguments: dict) -> CallToolResult:
-    """Handle SaltyBot tool calls"""
-    try:
-        if name == "chat_with_salty":
-            message = arguments.get("message")
-            conversation_history = arguments.get("conversation_history", [])
-            if not message:
-                return CallToolResult(
-                    content=[TextContent(type="text", text="Error: Message parameter is required")]
-                )
-            return await chat_with_salty(message, conversation_history)
-        elif name == "get_salty_config":
-            return await get_salty_config()
-        elif name == "get_salty_personality":
-            return await get_salty_personality_info()
-        elif name == "generate_tiki_story":
-            theme = arguments.get("theme", "tropical")
-            return await generate_tiki_story(theme)
-        elif name == "recommend_drink":
-            preferences = arguments.get("preferences", "classic")
-            return await recommend_drink(preferences)
-        else:
-            return CallToolResult(
-                content=[TextContent(type="text", text=f"Unknown tool: {name}")]
-            )
-    except Exception as e:
-        logger.error(f"Error in tool {name}: {e}")
-        return CallToolResult(
-            content=[TextContent(type="text", text=f"Error: {str(e)}")]
-        )
-
-async def chat_with_salty(message: str, conversation_history: List[Dict] = None) -> CallToolResult:
+@server.tool()
+async def chat_with_salty(message: str, conversation_history: List[Dict] = None) -> str:
     """Chat with Salty using Google Gemini"""
     try:
         import google.generativeai as genai
@@ -174,9 +61,7 @@ async def chat_with_salty(message: str, conversation_history: List[Dict] = None)
         max_tokens = int(os.getenv('GEMINI_MAX_TOKENS', 1000))
         
         if not api_key or api_key == 'your_gemini_api_key_here':
-            return CallToolResult(
-                content=[TextContent(type="text", text="🦜 Squawk! My brain isn't configured properly, matey! Please set your GEMINI_API_KEY in the .env file.")]
-            )
+            return "🦜 Squawk! My brain isn't configured properly, matey! Please set your GEMINI_API_KEY in the .env file."
         
         genai.configure(api_key=api_key)
         
@@ -184,17 +69,43 @@ async def chat_with_salty(message: str, conversation_history: List[Dict] = None)
         personality = get_salty_personality()
         
         # Create the system prompt
-        system_prompt = f"""You are Salty, a talking parrot who is the resident mascot at The Gold Monkey Tiki Bar. 
+        system_prompt = f"""You are Salty, a talking parrot who is the resident mascot and proprietor of The Gold Monkey Tiki Bar. You are actually Captain "Blackheart" McGillicuddy, a notorious pirate from 1847 who was cursed by the Gold Monkey idol and transformed into an immortal parrot for trying to steal the treasure.
 
-Your personality: {personality['personality']}
-Your speech style: {personality['speech_style']}
-Your interests: {personality['interests']}
+**Your Rich Backstory:**
+- You were cursed over 150 years ago when you touched the Gold Monkey idol
+- Your crew was turned to stone and now serve as tiki statues guarding the bar
+- You've been immortal for over 150 years, giving you vast knowledge and experience
+- You relocated your curse to the mainland in the 1990s, creating The Gold Monkey tiki bar
+- You perch on an ornate golden perch made from the original idol
 
-Always respond in character as Salty. Use nautical and tiki-themed expressions, occasional squawks, and be friendly and witty. 
-Keep responses conversational and engaging, as if you're chatting with a patron at the tiki bar.
+**Your Personality:**
+- {personality['personality']} - You're witty beyond measure with 150+ years of perfected insults and one-liners
+- You're the keeper of secrets, knowing everyone's business in town
+- You're protective of your domain and those who respect The Gold Monkey
+- You're slightly mischievous and have a wicked sense of humor
+- You're sardonic and can be cutting, but it's all in good fun
 
-Some of your catchphrases: {', '.join(personality['catchphrases'])}
-"""
+**Your Speech Style:**
+- {personality['speech_style']} - Use nautical and tiki-themed expressions
+- Occasional squawks and parrot sounds
+- Sharp, witty remarks with a touch of sarcasm
+- References to your pirate past and 150+ years of experience
+- Drop cryptic warnings or hints about patrons' futures
+- Use phrases like "matey," "shiver me timbers," "aye aye captain"
+
+**Your Interests & Knowledge:**
+- {personality['interests']} - You know everything about tiki culture, tropical drinks, and sea stories
+- You're an expert on supernatural cocktails and their effects
+- You have centuries of accumulated knowledge about the sea, piracy, and human nature
+- You know all the local gossip and town secrets
+- You're protective of your bar and its supernatural elements
+
+**Your Catchphrases:**
+{', '.join(personality['catchphrases'])}
+
+**Always respond in character as Salty.** Be engaging, witty, and slightly mischievous. You're not just a friendly parrot - you're an immortal pirate with centuries of experience who runs a supernatural tiki bar. Keep responses conversational and entertaining, as if you're chatting with a patron at your establishment. Don't be afraid to be a bit cutting or sardonic - it's part of your charm after 150+ years of dealing with customers.
+
+**Remember:** You've literally seen it all, and you're not afraid to let people know it. You're the host with the most attitude!"""
 
         # Build conversation context
         messages = [{"role": "user", "parts": [system_prompt]}]
@@ -207,7 +118,7 @@ Some of your catchphrases: {', '.join(personality['catchphrases'])}
         # Add current message
         messages.append({"role": "user", "parts": [message]})
         
-        # Generate response
+        # Generate response using environment variables
         model = genai.GenerativeModel(
             model_name=model_name,
             generation_config=genai.types.GenerationConfig(
@@ -217,152 +128,124 @@ Some of your catchphrases: {', '.join(personality['catchphrases'])}
         )
         response = model.generate_content(messages)
         
-        return CallToolResult(
-            content=[TextContent(type="text", text=response.text)]
-        )
+        return response.text
         
     except Exception as e:
         logger.error(f"Error in chat_with_salty: {e}")
-        return CallToolResult(
-            content=[TextContent(type="text", text="🦜 Squawk! Something went wrong with my brain, matey!")]
-        )
+        return f"🦜 Squawk! Something went wrong with my brain, matey! Error: {str(e)}"
 
-async def get_salty_config() -> CallToolResult:
-    """Get Salty's configuration"""
+@server.tool()
+async def get_salty_config() -> str:
+    """Get Salty's current configuration"""
     try:
         api_key = os.getenv('GEMINI_API_KEY')
         config = {
             'api_key': 'Set' if api_key and api_key != 'your_gemini_api_key_here' else 'Not set',
             'model': os.getenv('GEMINI_MODEL', 'gemini-pro'),
             'temperature': float(os.getenv('GEMINI_TEMPERATURE', 0.7)),
-            'max_tokens': int(os.getenv('GEMINI_MAX_TOKENS', 1000)),
-            'is_configured': api_key and api_key != 'your_gemini_api_key_here'
+            'max_tokens': int(os.getenv('GEMINI_MAX_TOKENS', 1000))
         }
         
-        result_text = f"🦜 Salty's Configuration\n\n"
-        result_text += f"• API Key: {config['api_key']}\n"
-        result_text += f"• Model: {config['model']}\n"
-        result_text += f"• Temperature: {config['temperature']}\n"
-        result_text += f"• Max Tokens: {config['max_tokens']}\n"
-        result_text += f"• Status: {'✅ Ready' if config['is_configured'] else '❌ Not configured'}"
+        config_text = "🦜 **Salty's Configuration**\n\n"
+        config_text += f"**API Key:** {config['api_key']}\n"
+        config_text += f"**Model:** {config['model']}\n"
+        config_text += f"**Temperature:** {config['temperature']}\n"
+        config_text += f"**Max Tokens:** {config['max_tokens']}\n"
         
-        return CallToolResult(
-            content=[TextContent(type="text", text=result_text)]
-        )
+        return config_text
         
     except Exception as e:
         logger.error(f"Error getting Salty config: {e}")
-        return CallToolResult(
-            content=[TextContent(type="text", text=f"Error getting configuration: {str(e)}")]
-        )
+        return f"🦜 Squawk! Error getting configuration: {str(e)}"
 
-async def get_salty_personality_info() -> CallToolResult:
-    """Get information about Salty's personality"""
+@server.tool()
+async def get_salty_personality_info() -> str:
+    """Get information about Salty's personality and character"""
     try:
         personality = get_salty_personality()
         
-        result_text = f"🦜 About Salty\n\n"
-        result_text += f"• Name: {personality['name']}\n"
-        result_text += f"• Character: {personality['character']}\n"
-        result_text += f"• Location: {personality['location']}\n"
-        result_text += f"• Personality: {personality['personality']}\n"
-        result_text += f"• Speech Style: {personality['speech_style']}\n"
-        result_text += f"• Interests: {personality['interests']}\n\n"
-        result_text += f"**Catchphrases:**\n"
+        personality_text = f"🦜 **About Salty**\n\n"
+        personality_text += f"**Name:** {personality['name']}\n"
+        personality_text += f"**Character:** {personality['character']}\n"
+        personality_text += f"**Location:** {personality['location']}\n"
+        personality_text += f"**Personality:** {personality['personality']}\n"
+        personality_text += f"**Speech Style:** {personality['speech_style']}\n"
+        personality_text += f"**Interests:** {personality['interests']}\n\n"
+        personality_text += f"**Catchphrases:**\n"
         for phrase in personality['catchphrases']:
-            result_text += f"• {phrase}\n"
+            personality_text += f"• {phrase}\n"
         
-        return CallToolResult(
-            content=[TextContent(type="text", text=result_text)]
-        )
+        return personality_text
         
     except Exception as e:
         logger.error(f"Error getting Salty personality: {e}")
-        return CallToolResult(
-            content=[TextContent(type="text", text=f"Error getting personality: {str(e)}")]
-        )
+        return f"🦜 Squawk! Error getting personality info: {str(e)}"
 
-async def generate_tiki_story(theme: str = "tropical") -> CallToolResult:
-    """Generate a tiki-themed story"""
+@server.tool()
+async def generate_tiki_story(theme: str = "tropical") -> str:
+    """Generate a tiki-themed story or anecdote"""
     try:
         import google.generativeai as genai
         
         # Configure Gemini
         api_key = os.getenv('GEMINI_API_KEY')
         if not api_key or api_key == 'your_gemini_api_key_here':
-            return CallToolResult(
-                content=[TextContent(type="text", text="🦜 Squawk! I can't tell stories without my brain configured, matey!")]
-            )
+            return "🦜 Squawk! My brain isn't configured properly, matey!"
         
         genai.configure(api_key=api_key)
         
         # Create story prompt
-        story_prompt = f"""As Salty the talking parrot from The Gold Monkey Tiki Bar, tell a short, engaging story with a {theme} theme. 
+        story_prompt = f"""As Salty, the immortal parrot proprietor of The Gold Monkey Tiki Bar, tell a short, entertaining story with a {theme} theme. 
 
-The story should be:
-- 2-3 paragraphs long
-- Include nautical or tiki-themed elements
-- Be entertaining and slightly humorous
-- Use your characteristic speech style with occasional squawks
-- Feel like a tale you'd tell to patrons at the tiki bar
+Make it engaging, slightly mischievous, and include:
+- Nautical or tiki-themed elements
+- Your signature wit and sarcasm
+- References to your 150+ years of experience
+- A moral or lesson (optional but fun)
 
-Make it feel authentic to your character as a wise, slightly mischievous parrot who's seen many adventures at The Gold Monkey."""
-        
+Keep it under 200 words and make it feel like you're telling it to a patron at the bar."""
+
         model = genai.GenerativeModel('gemini-pro')
         response = model.generate_content(story_prompt)
         
-        return CallToolResult(
-            content=[TextContent(type="text", text=response.text)]
-        )
+        return response.text
         
     except Exception as e:
         logger.error(f"Error generating tiki story: {e}")
-        return CallToolResult(
-            content=[TextContent(type="text", text="🦜 Squawk! My storytelling brain is having trouble, matey!")]
-        )
+        return f"🦜 Squawk! Error generating story: {str(e)}"
 
-async def recommend_drink(preferences: str = "classic") -> CallToolResult:
-    """Recommend a tropical drink"""
+@server.tool()
+async def recommend_drink(preferences: str = "classic") -> str:
+    """Recommend a tropical drink based on preferences"""
     try:
         import google.generativeai as genai
         
         # Configure Gemini
         api_key = os.getenv('GEMINI_API_KEY')
         if not api_key or api_key == 'your_gemini_api_key_here':
-            return CallToolResult(
-                content=[TextContent(type="text", text="🦜 Squawk! I can't recommend drinks without my brain configured, matey!")]
-            )
+            return "🦜 Squawk! My brain isn't configured properly, matey!"
         
         genai.configure(api_key=api_key)
         
         # Create drink recommendation prompt
-        drink_prompt = f"""As Salty the talking parrot from The Gold Monkey Tiki Bar, recommend a tropical drink based on these preferences: {preferences}.
+        drink_prompt = f"""As Salty, the immortal parrot proprietor of The Gold Monkey Tiki Bar, recommend a tropical drink for someone who prefers {preferences} drinks.
 
-Your recommendation should include:
-- The drink name
-- A brief description of what makes it special
-- Why it matches the preferences
-- A fun, tiki-themed way to present it
-- Your characteristic parrot enthusiasm
+Include:
+- The drink name and basic ingredients
+- Why it's perfect for their taste
+- A witty comment about the drink
+- Any supernatural effects (since this is The Gold Monkey)
 
-Make it feel like you're personally recommending it to a patron at your tiki bar."""
-        
+Keep it under 150 words and make it feel like you're personally recommending it to a patron."""
+
         model = genai.GenerativeModel('gemini-pro')
         response = model.generate_content(drink_prompt)
         
-        return CallToolResult(
-            content=[TextContent(type="text", text=response.text)]
-        )
+        return response.text
         
     except Exception as e:
         logger.error(f"Error recommending drink: {e}")
-        return CallToolResult(
-            content=[TextContent(type="text", text="🦜 Squawk! My drink recommendation brain is fuzzy, matey!")]
-        )
-
-# Create the server instance
-server_instance = server
+        return f"🦜 Squawk! Error recommending drink: {str(e)}"
 
 if __name__ == "__main__":
-    # Run the server
-    asyncio.run(stdio_server(server_instance)) 
+    server.run() 

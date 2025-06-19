@@ -37,6 +37,57 @@ A sophisticated home automation and entertainment system featuring Salty, the AI
 - **Document Management** - Add, list, and rebuild knowledge base
 - **Direct Integration** - Direct ChromaDB and sentence-transformers integration
 
+## MCP Server Management
+
+All servers are now managed through the MCP (Model Context Protocol) CLI using `uv`.
+
+### Starting Servers
+
+**Start all servers at once:**
+```bash
+python start_servers.py
+```
+
+**Start individual servers:**
+```bash
+# TP-Link Server
+uv run mcp run python mcp_servers/tplink_server.py
+
+# RAG Server
+uv run mcp run python mcp_servers/rag_server.py
+
+# Spotify Server
+uv run mcp run python mcp_servers/spotify_server.py
+
+# SaltyBot Server
+uv run mcp run python mcp_servers/saltybot_server.py
+```
+
+### Stopping Servers
+
+**Stop all servers:**
+```bash
+python stop_servers.py
+```
+
+**Or manually stop with Ctrl+C** in each terminal window.
+
+### MCP Development
+
+**Run with MCP Inspector (for debugging):**
+```bash
+uv run mcp dev python mcp_servers/tplink_server.py
+```
+
+**Check MCP version:**
+```bash
+uv run mcp version
+```
+
+### Server Status
+
+The servers will show their status in the Streamlit app sidebar when running.
+
 ## Installation
 
 1. **Clone the repository:**

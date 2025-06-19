@@ -19,189 +19,81 @@ class SaltyBotMCPClient:
     def __init__(self, server_path: str = None):
         """Initialize the SaltyBot MCP client"""
         self.server_path = server_path or "mcp_servers/saltybot_server.py"
-        self.session = None
     
-    async def __aenter__(self):
-        """Async context manager entry"""
-        await self.connect()
-        return self
-    
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit"""
-        await self.disconnect()
-    
-    async def connect(self):
-        """Connect to the SaltyBot MCP server"""
+    async def _call_tool(self, tool_name: str, arguments: dict = None) -> Dict[str, Any]:
+        """Call a tool on the SaltyBot MCP server"""
         try:
-            # Create server parameters
             server_params = StdioServerParameters(
                 command="python",
                 args=[self.server_path]
             )
             
-            # Create client session
-            self.session = ClientSession(server_params)
-            await self.session.__aenter__()
-            
-            logger.info("Connected to SaltyBot MCP server")
-            
+            async with stdio_client(server_params) as session:
+                # Call the tool
+                result = await session.call_tool(tool_name, arguments or {})
+                
+                # Parse the result
+                if result.content and len(result.content) > 0:
+                    content = result.content[0]
+                    if hasattr(content, 'text'):
+                        return {"response": content.text}
+                    else:
+                        return {"response": str(content)}
+                else:
+                    return {"error": "No response from server"}
+                    
         except Exception as e:
-            logger.error(f"Error connecting to SaltyBot MCP server: {e}")
-            raise
-    
-    async def disconnect(self):
-        """Disconnect from the SaltyBot MCP server"""
-        if self.session:
-            try:
-                await self.session.__aexit__(None, None, None)
-                logger.info("Disconnected from SaltyBot MCP server")
-            except Exception as e:
-                logger.error(f"Error disconnecting from SaltyBot MCP server: {e}")
+            logger.error(f"Error calling tool {tool_name}: {e}")
+            return {"error": str(e)}
     
     async def chat_with_salty(self, message: str, conversation_history: List[Dict] = None) -> Dict[str, Any]:
-        """Chat with Salty, the talking parrot"""
-        try:
-            if not self.session:
-                await self.connect()
-            
-            # Call the chat_with_salty tool
-            args = {"message": message}
-            if conversation_history:
-                args["conversation_history"] = conversation_history
-            
-            result = await self.session.call_tool("chat_with_salty", args)
-            
-            # Parse the result
-            if result.content and len(result.content) > 0:
-                content = result.content[0]
-                if hasattr(content, 'text'):
-                    return {"response": content.text}
-                else:
-                    return {"response": str(content)}
-            else:
-                return {"error": "No response from server"}
-                
-        except Exception as e:
-            logger.error(f"Error chatting with Salty: {e}")
-            return {"error": str(e)}
+        """Chat with Salty"""
+        args = {"message": message}
+        if conversation_history:
+            args["conversation_history"] = conversation_history
+        return await self._call_tool("chat_with_salty", args)
     
-    async def get_salty_config(self) -> Dict[str, Any]:
-        """Get Salty's current configuration"""
-        try:
-            if not self.session:
-                await self.connect()
-            
-            # Call the get_salty_config tool
-            result = await self.session.call_tool("get_salty_config", {})
-            
-            # Parse the result
-            if result.content and len(result.content) > 0:
-                content = result.content[0]
-                if hasattr(content, 'text'):
-                    return {"response": content.text}
-                else:
-                    return {"response": str(content)}
-            else:
-                return {"error": "No response from server"}
-                
-        except Exception as e:
-            logger.error(f"Error getting Salty config: {e}")
-            return {"error": str(e)}
+    async def get_config(self) -> Dict[str, Any]:
+        """Get Salty's configuration"""
+        return await self._call_tool("get_salty_config")
     
-    async def get_salty_personality(self) -> Dict[str, Any]:
-        """Get information about Salty's personality"""
-        try:
-            if not self.session:
-                await self.connect()
-            
-            # Call the get_salty_personality tool
-            result = await self.session.call_tool("get_salty_personality", {})
-            
-            # Parse the result
-            if result.content and len(result.content) > 0:
-                content = result.content[0]
-                if hasattr(content, 'text'):
-                    return {"response": content.text}
-                else:
-                    return {"response": str(content)}
-            else:
-                return {"error": "No response from server"}
-                
-        except Exception as e:
-            logger.error(f"Error getting Salty personality: {e}")
-            return {"error": str(e)}
+    async def get_personality(self) -> Dict[str, Any]:
+        """Get Salty's personality information"""
+        return await self._call_tool("get_salty_personality")
     
-    async def generate_tiki_story(self, theme: str = "tropical") -> Dict[str, Any]:
+    async def generate_story(self, theme: str = "tropical") -> Dict[str, Any]:
         """Generate a tiki-themed story"""
-        try:
-            if not self.session:
-                await self.connect()
-            
-            # Call the generate_tiki_story tool
-            result = await self.session.call_tool("generate_tiki_story", {"theme": theme})
-            
-            # Parse the result
-            if result.content and len(result.content) > 0:
-                content = result.content[0]
-                if hasattr(content, 'text'):
-                    return {"response": content.text}
-                else:
-                    return {"response": str(content)}
-            else:
-                return {"error": "No response from server"}
-                
-        except Exception as e:
-            logger.error(f"Error generating tiki story: {e}")
-            return {"error": str(e)}
+        return await self._call_tool("generate_tiki_story", {"theme": theme})
     
     async def recommend_drink(self, preferences: str = "classic") -> Dict[str, Any]:
         """Recommend a tropical drink"""
-        try:
-            if not self.session:
-                await self.connect()
-            
-            # Call the recommend_drink tool
-            result = await self.session.call_tool("recommend_drink", {"preferences": preferences})
-            
-            # Parse the result
-            if result.content and len(result.content) > 0:
-                content = result.content[0]
-                if hasattr(content, 'text'):
-                    return {"response": content.text}
-                else:
-                    return {"response": str(content)}
-            else:
-                return {"error": "No response from server"}
-                
-        except Exception as e:
-            logger.error(f"Error recommending drink: {e}")
-            return {"error": str(e)}
+        return await self._call_tool("recommend_drink", {"preferences": preferences})
 
 # Convenience functions for direct use
 async def chat_with_salty(message: str, conversation_history: List[Dict] = None) -> Dict[str, Any]:
     """Chat with Salty"""
-    async with SaltyBotMCPClient() as client:
-        return await client.chat_with_salty(message, conversation_history)
+    client = SaltyBotMCPClient()
+    return await client.chat_with_salty(message, conversation_history)
 
 async def get_salty_config() -> Dict[str, Any]:
     """Get Salty's configuration"""
-    async with SaltyBotMCPClient() as client:
-        return await client.get_salty_config()
+    client = SaltyBotMCPClient()
+    return await client.get_config()
 
 async def get_salty_personality() -> Dict[str, Any]:
-    """Get Salty's personality"""
-    async with SaltyBotMCPClient() as client:
-        return await client.get_salty_personality()
+    """Get Salty's personality information"""
+    client = SaltyBotMCPClient()
+    return await client.get_personality()
 
 async def generate_tiki_story(theme: str = "tropical") -> Dict[str, Any]:
-    """Generate a tiki story"""
-    async with SaltyBotMCPClient() as client:
-        return await client.generate_tiki_story(theme)
+    """Generate a tiki-themed story"""
+    client = SaltyBotMCPClient()
+    return await client.generate_story(theme)
 
 async def recommend_drink(preferences: str = "classic") -> Dict[str, Any]:
-    """Recommend a drink"""
-    async with SaltyBotMCPClient() as client:
-        return await client.recommend_drink(preferences)
+    """Recommend a tropical drink"""
+    client = SaltyBotMCPClient()
+    return await client.recommend_drink(preferences)
 
 if __name__ == "__main__":
     # Test the client
@@ -212,7 +104,7 @@ if __name__ == "__main__":
             print("Salty config:", config)
             
             # Test chat
-            response = await chat_with_salty("Hello Salty! How are you today?")
+            response = await chat_with_salty("Hello Salty!")
             print("Chat response:", response)
             
         except Exception as e:

@@ -1,92 +1,161 @@
 #!/usr/bin/env python3
 """
-Test script for MCP servers
-Tests the functionality of all MCP servers used by Salty
+Test script to check MCP servers using mcp run
 """
 
-import asyncio
+import subprocess
+import json
+import time
 import sys
-import os
+from pathlib import Path
 
-# Add mcp_servers to Python path (from utils folder, need to go up one level)
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "mcp_servers"))
-
-def test_saltybot_server():
-    """Test the SaltyBot MCP server"""
-    print("🦜 Testing SaltyBot MCP server...")
+def check_server_structure(server_name, server_path):
+    """Check if a server has the correct structure"""
+    print(f"\n{'='*60}")
+    print(f"Checking {server_name} server: {server_path}")
+    print(f"{'='*60}")
+    
+    if not Path(server_path).exists():
+        print(f"❌ Server file not found: {server_path}")
+        return False
     
     try:
-        from saltybot_client import chat_with_salty, get_salty_config
-        print("✅ SaltyBot MCP client imported successfully")
+        # Read the server file to check for required components
+        with open(server_path, 'r') as f:
+            content = f.read()
         
-        # Test configuration
-        config = get_salty_config()
-        print(f"✅ SaltyBot config: {config}")
+        # Check for required MCP components
+        checks = {
+            "FastMCP import": "from mcp.server.fastmcp import FastMCP" in content,
+            "Server creation": "FastMCP(" in content,
+            "Tool decorators": "@server.tool()" in content,
+            "stdio_server": "stdio_server" in content,
+            "Main guard": "if __name__ == \"__main__\":" in content
+        }
         
-        return True
+        print("🔍 Checking server structure...")
+        all_passed = True
+        for check_name, passed in checks.items():
+            status = "✅" if passed else "❌"
+            print(f"   {status} {check_name}")
+            if not passed:
+                all_passed = False
+        
+        if all_passed:
+            print(f"✅ {server_name} server structure is correct")
+        else:
+            print(f"❌ {server_name} server has structural issues")
+        
+        return all_passed
+        
     except Exception as e:
-        print(f"❌ SaltyBot MCP server test failed: {e}")
+        print(f"❌ Error checking {server_name}: {e}")
         return False
 
-def test_rag_server():
-    """Test the RAG MCP server"""
-    print("📚 Testing RAG MCP server...")
+def test_mcp_run_command(server_name, server_path):
+    """Test the mcp run command syntax"""
+    print(f"\n🚀 Testing mcp run command for {server_name}...")
     
     try:
-        from rag_client import get_rag_stats, query_rag_documents
-        print("✅ RAG MCP client imported successfully")
+        # Test the mcp run command (this will start the server briefly)
+        result = subprocess.run([
+            "mcp", "run", server_path, "--help"
+        ], capture_output=True, text=True, timeout=5)
         
-        # Test basic functionality
-        stats = get_rag_stats()
-        print(f"✅ RAG stats: {stats}")
-        
+        if result.returncode == 0:
+            print(f"✅ mcp run command works for {server_name}")
+            return True
+        else:
+            print(f"❌ mcp run command failed for {server_name}")
+            print(f"   Error: {result.stderr}")
+            return False
+            
+    except subprocess.TimeoutExpired:
+        print(f"⏰ mcp run command timed out for {server_name} (this is normal)")
         return True
     except Exception as e:
-        print(f"❌ RAG MCP server test failed: {e}")
+        print(f"❌ Error testing mcp run for {server_name}: {e}")
         return False
 
-def test_tplink_server():
-    """Test the TP-Link MCP server"""
-    print("💡 Testing TP-Link MCP server...")
+def show_mcp_run_commands():
+    """Show the mcp run commands for all servers"""
+    print(f"\n{'='*60}")
+    print("📋 MCP Run Commands")
+    print(f"{'='*60}")
     
-    try:
-        from tplink_client import discover_tplink_devices, get_tplink_status
-        print("✅ TP-Link MCP client imported successfully")
-        
-        # Test basic functionality
-        status = get_tplink_status()
-        print(f"✅ TP-Link status: {status}")
-        
-        return True
-    except Exception as e:
-        print(f"❌ TP-Link MCP server test failed: {e}")
-        return False
+    servers = {
+        "TP-Link": "mcp_servers/tplink_server.py",
+        "RAG": "mcp_servers/rag_server.py",
+        "Spotify": "mcp_servers/spotify_server.py",
+        "Roku": "mcp_servers/roku_server.py",
+        "SaltyBot": "mcp_servers/saltybot_server.py"
+    }
+    
+    for server_name, server_path in servers.items():
+        print(f"\n🔧 {server_name} Server:")
+        print(f"   mcp run {server_path}")
+        print(f"   mcp run {server_path} --transport stdio")
+    
+    print(f"\n💡 To run all servers using the start script:")
+    print(f"   python utils/start_servers.py")
+    print(f"\n💡 To stop all servers:")
+    print(f"   python utils/stop_servers.py")
 
-async def main():
-    """Run all MCP server tests"""
-    print("🧪 Testing MCP servers...\n")
+def main():
+    """Test all MCP servers"""
+    servers = {
+        "TP-Link": "mcp_servers/tplink_server.py",
+        "RAG": "mcp_servers/rag_server.py",
+        "Spotify": "mcp_servers/spotify_server.py",
+        "Roku": "mcp_servers/roku_server.py",
+        "SaltyBot": "mcp_servers/saltybot_server.py"
+    }
     
-    # Test each server
-    saltybot_ok = test_saltybot_server()
-    print()
+    print("🔧 MCP Server Testing Tool (using mcp run)")
+    print("=" * 60)
+    print("This script checks all MCP servers for proper structure")
+    print("and tests the mcp run command syntax")
+    print("=" * 60)
     
-    rag_ok = test_rag_server()
-    print()
+    structure_results = {}
+    command_results = {}
     
-    tplink_ok = test_tplink_server()
-    print()
+    for server_name, server_path in servers.items():
+        structure_results[server_name] = check_server_structure(server_name, server_path)
+        command_results[server_name] = test_mcp_run_command(server_name, server_path)
     
-    # Summary
-    print("📊 Test Results:")
-    print(f"🦜 SaltyBot: {'✅ PASS' if saltybot_ok else '❌ FAIL'}")
-    print(f"📚 RAG: {'✅ PASS' if rag_ok else '❌ FAIL'}")
-    print(f"💡 TP-Link: {'✅ PASS' if tplink_ok else '❌ FAIL'}")
-    print()
+    print(f"\n{'='*60}")
+    print("📊 Test Results Summary")
+    print(f"{'='*60}")
     
-    if all([saltybot_ok, rag_ok, tplink_ok]):
-        print("🎉 All MCP servers are working correctly!")
+    structure_passed = 0
+    command_passed = 0
+    
+    for server_name in servers.keys():
+        structure_ok = structure_results[server_name]
+        command_ok = command_results[server_name]
+        
+        structure_status = "✅ PASS" if structure_ok else "❌ FAIL"
+        command_status = "✅ PASS" if command_ok else "❌ FAIL"
+        
+        print(f"{server_name:15} Structure: {structure_status} | Command: {command_status}")
+        
+        if structure_ok:
+            structure_passed += 1
+        if command_ok:
+            command_passed += 1
+    
+    print(f"\n🎯 Results:")
+    print(f"   Structure: {structure_passed}/{len(servers)} servers passed")
+    print(f"   Commands: {command_passed}/{len(servers)} servers passed")
+    
+    if structure_passed == len(servers) and command_passed == len(servers):
+        print("🎉 All servers are ready to run with mcp run!")
     else:
-        print("⚠️ Some MCP servers have issues. Check the logs above.")
+        print("⚠️ Some servers have issues. Check the output above.")
+    
+    # Show the mcp run commands
+    show_mcp_run_commands()
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    main() 

@@ -7,7 +7,7 @@ Provides smart lighting control via MCP protocol
 import asyncio
 import logging
 from typing import Any, Sequence
-from mcp.server import Server
+from mcp.server.fastmcp import FastMCP
 from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
 from mcp.types import (
@@ -21,105 +21,17 @@ from mcp.types import (
     EmbeddedResource,
     LoggingLevel,
 )
-from mcp.server.lowlevel.server import NotificationOptions
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Initialize the server
-server = Server("tplink-server")
+server = FastMCP("tplink-server")
 
-@server.list_tools()
-async def handle_list_tools() -> ListToolsResult:
-    """List available TP-Link tools"""
-    return ListToolsResult(
-        tools=[
-            Tool(
-                name="discover_tplink_devices",
-                description="Discover TP-Link smart devices on the network",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                }
-            ),
-            Tool(
-                name="turn_on_lights",
-                description="Turn on all TP-Link smart lights",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                }
-            ),
-            Tool(
-                name="turn_off_lights",
-                description="Turn off all TP-Link smart lights",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                }
-            ),
-            Tool(
-                name="set_light_color",
-                description="Set color for all TP-Link smart lights",
-                inputSchema={
-                    "type": "object",
-                    "properties": {
-                        "color": {
-                            "type": "string",
-                            "description": "Color name (red, orange, yellow, green, blue, purple, pink, white, warm_white, cool_white) or hex color code",
-                            "enum": ["red", "orange", "yellow", "green", "blue", "purple", "pink", "white", "warm_white", "cool_white"]
-                        }
-                    },
-                    "required": ["color"]
-                }
-            ),
-            Tool(
-                name="get_light_status",
-                description="Get status of all TP-Link smart lights",
-                inputSchema={
-                    "type": "object",
-                    "properties": {},
-                    "required": []
-                }
-            ),
-        ]
-    )
-
-@server.call_tool()
-async def handle_call_tool(name: str, arguments: dict) -> CallToolResult:
-    """Handle TP-Link tool calls"""
-    try:
-        if name == "discover_tplink_devices":
-            return await discover_tplink_devices()
-        elif name == "turn_on_lights":
-            return await turn_on_lights()
-        elif name == "turn_off_lights":
-            return await turn_off_lights()
-        elif name == "set_light_color":
-            color = arguments.get("color")
-            if not color:
-                return CallToolResult(
-                    content=[TextContent(type="text", text="Error: Color parameter is required")]
-                )
-            return await set_light_color(color)
-        elif name == "get_light_status":
-            return await get_light_status()
-        else:
-            return CallToolResult(
-                content=[TextContent(type="text", text=f"Unknown tool: {name}")]
-            )
-    except Exception as e:
-        logger.error(f"Error in tool {name}: {e}")
-        return CallToolResult(
-            content=[TextContent(type="text", text=f"Error: {str(e)}")]
-        )
-
-async def discover_tplink_devices() -> CallToolResult:
-    """Discover TP-Link devices on the network"""
+@server.tool()
+async def discover_tplink_devices() -> str:
+    """Discover TP-Link smart devices on the network"""
     try:
         import kasa
         
@@ -128,9 +40,7 @@ async def discover_tplink_devices() -> CallToolResult:
         device_list = list(devices.values())
         
         if not device_list:
-            return CallToolResult(
-                content=[TextContent(type="text", text="No TP-Link devices found on the network")]
-            )
+            return "No TP-Link devices found on the network"
         
         # Format device information
         device_info = []
@@ -164,17 +74,14 @@ async def discover_tplink_devices() -> CallToolResult:
                 result_text += f"  Error: {info['error']}\n"
             result_text += "\n"
         
-        return CallToolResult(
-            content=[TextContent(type="text", text=result_text.strip())]
-        )
+        return result_text.strip()
         
     except Exception as e:
         logger.error(f"Error discovering devices: {e}")
-        return CallToolResult(
-            content=[TextContent(type="text", text=f"Error discovering TP-Link devices: {str(e)}")]
-        )
+        return f"Error discovering TP-Link devices: {str(e)}"
 
-async def turn_on_lights() -> CallToolResult:
+@server.tool()
+async def turn_on_lights() -> str:
     """Turn on all TP-Link smart lights"""
     try:
         import kasa
@@ -184,9 +91,7 @@ async def turn_on_lights() -> CallToolResult:
         device_list = list(devices.values())
         
         if not device_list:
-            return CallToolResult(
-                content=[TextContent(type="text", text="No TP-Link devices found on the network")]
-            )
+            return "No TP-Link devices found on the network"
         
         # Turn on all lights
         turned_on = 0
@@ -198,17 +103,14 @@ async def turn_on_lights() -> CallToolResult:
             except Exception as e:
                 logger.warning(f"Error turning on device {device.host}: {e}")
         
-        return CallToolResult(
-            content=[TextContent(type="text", text=f"🟢 Turned on {turned_on} out of {len(device_list)} devices")]
-        )
+        return f"🟢 Turned on {turned_on} out of {len(device_list)} devices"
         
     except Exception as e:
         logger.error(f"Error turning on lights: {e}")
-        return CallToolResult(
-            content=[TextContent(type="text", text=f"Error turning on lights: {str(e)}")]
-        )
+        return f"Error turning on lights: {str(e)}"
 
-async def turn_off_lights() -> CallToolResult:
+@server.tool()
+async def turn_off_lights() -> str:
     """Turn off all TP-Link smart lights"""
     try:
         import kasa
@@ -218,9 +120,7 @@ async def turn_off_lights() -> CallToolResult:
         device_list = list(devices.values())
         
         if not device_list:
-            return CallToolResult(
-                content=[TextContent(type="text", text="No TP-Link devices found on the network")]
-            )
+            return "No TP-Link devices found on the network"
         
         # Turn off all lights
         turned_off = 0
@@ -232,17 +132,14 @@ async def turn_off_lights() -> CallToolResult:
             except Exception as e:
                 logger.warning(f"Error turning off device {device.host}: {e}")
         
-        return CallToolResult(
-            content=[TextContent(type="text", text=f"⚫ Turned off {turned_off} out of {len(device_list)} devices")]
-        )
+        return f"⚫ Turned off {turned_off} out of {len(device_list)} devices"
         
     except Exception as e:
         logger.error(f"Error turning off lights: {e}")
-        return CallToolResult(
-            content=[TextContent(type="text", text=f"Error turning off lights: {str(e)}")]
-        )
+        return f"Error turning off lights: {str(e)}"
 
-async def set_light_color(color: str) -> CallToolResult:
+@server.tool()
+async def set_light_color(color: str) -> str:
     """Set color for all TP-Link smart lights"""
     try:
         import kasa
@@ -267,9 +164,7 @@ async def set_light_color(color: str) -> CallToolResult:
                 color = color.lstrip('#')
                 rgb = tuple(int(color[i:i+2], 16) for i in (0, 2, 4))
             except:
-                return CallToolResult(
-                    content=[TextContent(type="text", text="Error: Invalid hex color format")]
-                )
+                return "Error: Invalid hex color format"
         else:
             rgb = color_map.get(color.lower(), (255, 255, 255))
         
@@ -278,9 +173,7 @@ async def set_light_color(color: str) -> CallToolResult:
         device_list = list(devices.values())
         
         if not device_list:
-            return CallToolResult(
-                content=[TextContent(type="text", text="No TP-Link devices found on the network")]
-            )
+            return "No TP-Link devices found on the network"
         
         # Set color for all devices
         updated = 0
@@ -298,17 +191,14 @@ async def set_light_color(color: str) -> CallToolResult:
             except Exception as e:
                 logger.warning(f"Error setting color for device {device.host}: {e}")
         
-        return CallToolResult(
-            content=[TextContent(type="text", text=f"🎨 Set color to {color} for {updated} out of {len(device_list)} devices")]
-        )
+        return f"🎨 Set color to {color} for {updated} out of {len(device_list)} devices"
         
     except Exception as e:
         logger.error(f"Error setting light color: {e}")
-        return CallToolResult(
-            content=[TextContent(type="text", text=f"Error setting light color: {str(e)}")]
-        )
+        return f"Error setting light color: {str(e)}"
 
-async def get_light_status() -> CallToolResult:
+@server.tool()
+async def get_light_status() -> str:
     """Get status of all TP-Link smart lights"""
     try:
         import kasa
@@ -318,9 +208,7 @@ async def get_light_status() -> CallToolResult:
         device_list = list(devices.values())
         
         if not device_list:
-            return CallToolResult(
-                content=[TextContent(type="text", text="No TP-Link devices found on the network")]
-            )
+            return "No TP-Link devices found on the network"
         
         # Get status for all devices
         status_info = []
@@ -356,15 +244,11 @@ async def get_light_status() -> CallToolResult:
                 result_text += f"  Error: {status['error']}\n"
             result_text += "\n"
         
-        return CallToolResult(
-            content=[TextContent(type="text", text=result_text.strip())]
-        )
+        return result_text.strip()
         
     except Exception as e:
         logger.error(f"Error getting light status: {e}")
-        return CallToolResult(
-            content=[TextContent(type="text", text=f"Error getting light status: {str(e)}")]
-        )
+        return f"Error getting light status: {str(e)}"
 
 def _rgb_to_hsv(r, g, b):
     """Convert RGB to HSV."""
@@ -387,9 +271,5 @@ def _rgb_to_hsv(r, g, b):
     
     return int(h), int(s), int(v)
 
-# Create the server instance
-server_instance = server
-
 if __name__ == "__main__":
-    # Run the server
-    asyncio.run(stdio_server(server_instance)) 
+    server.run() 
