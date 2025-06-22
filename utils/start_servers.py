@@ -10,37 +10,45 @@ import signal
 import os
 from pathlib import Path
 
-def start_server(server_name, script_path):
-    """Start a single MCP server"""
+def start_server(server_name, script_path, server_type="mcp"):
+    """Start a single server"""
     try:
         print(f"Starting {server_name} server...")
-        process = subprocess.Popen([
-            "uv", "run", "mcp", "run", script_path
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        if server_type == "mcp":
+            process = subprocess.Popen([
+                "uv", "run", "mcp", "run", script_path
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        else:  # standalone
+            process = subprocess.Popen([
+                "python3", script_path
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         return process
     except Exception as e:
         print(f"Error starting {server_name}: {e}")
         return None
 
 def main():
-    """Start all MCP servers"""
+    """Start all servers"""
     servers = {
-        "TP-Link": "mcp_servers/tplink_server.py",
-        "RAG": "mcp_servers/rag_server.py",
-        "Spotify": "mcp_servers/spotify_server.py",
-        "Roku": "mcp_servers/roku_server.py",
-        "SaltyBot": "mcp_servers/saltybot_server.py"
+        "TP-Link": {"path": "mcp_servers/tplink_server.py", "type": "mcp"},
+        "RAG": {"path": "mcp_servers/rag_server.py", "type": "mcp"},
+        "Spotify": {"path": "mcp_servers/spotify_server.py", "type": "mcp"},
+        "Roku": {"path": "mcp_servers/roku_server.py", "type": "mcp"},
+        "SaltyBot": {"path": "mcp_servers/saltybot_server.py", "type": "mcp"},
+        "Voice": {"path": "mcp_servers/voice_server.py", "type": "standalone"}
     }
     
     processes = {}
     
-    print("🚀 Starting all MCP servers for Salty...")
+    print("🚀 Starting all servers for Salty...")
     print("=" * 50)
     
     # Start all servers
-    for server_name, script_path in servers.items():
+    for server_name, server_info in servers.items():
+        script_path = server_info["path"]
+        server_type = server_info["type"]
         if Path(script_path).exists():
-            process = start_server(server_name, script_path)
+            process = start_server(server_name, script_path, server_type)
             if process:
                 processes[server_name] = process
                 print(f"✅ {server_name} server started (PID: {process.pid})")

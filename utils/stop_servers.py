@@ -1,34 +1,53 @@
 #!/usr/bin/env python3
 """
-Stop all MCP servers for Salty
+Stop all servers for Salty
 """
 
 import subprocess
 import psutil
 import os
 
-def stop_mcp_servers():
-    """Stop all MCP server processes"""
-    print("🛑 Stopping all MCP servers...")
+def stop_servers():
+    """Stop all server processes"""
+    print("🛑 Stopping all servers for Salty...")
     
-    # Look for Python processes running MCP servers
+    # Define server names for better feedback
+    server_names = {
+        'tplink_server.py': 'TP-Link',
+        'rag_server.py': 'RAG', 
+        'spotify_server.py': 'Spotify',
+        'roku_server.py': 'Roku',
+        'saltybot_server.py': 'SaltyBot',
+        'voice_server.py': 'Voice'
+    }
+    
+    stopped_count = 0
+    
+    # Look for Python processes running servers
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
             if proc.info['name'] == 'python' and proc.info['cmdline']:
                 cmdline = ' '.join(proc.info['cmdline'])
-                if any(server in cmdline for server in ['tplink_server.py', 'rag_server.py', 'spotify_server.py', 'roku_server.py', 'saltybot_server.py']):
-                    print(f"Stopping process {proc.info['pid']} ({cmdline})")
-                    proc.terminate()
-                    try:
-                        proc.wait(timeout=5)
-                        print(f"✅ Process {proc.info['pid']} stopped gracefully")
-                    except psutil.TimeoutExpired:
-                        proc.kill()
-                        print(f"⚠️ Process {proc.info['pid']} force killed")
+                for server_file, server_name in server_names.items():
+                    if server_file in cmdline:
+                        print(f"Stopping {server_name} server (PID: {proc.info['pid']})")
+                        proc.terminate()
+                        try:
+                            proc.wait(timeout=5)
+                            print(f"✅ {server_name} server stopped gracefully")
+                            stopped_count += 1
+                        except psutil.TimeoutExpired:
+                            proc.kill()
+                            print(f"⚠️ {server_name} server force killed")
+                            stopped_count += 1
+                        break
         except (psutil.NoSuchProcess, psutil.AccessDenied):
             continue
     
-    print("👋 All MCP servers stopped!")
+    if stopped_count == 0:
+        print("ℹ️ No running servers found")
+    else:
+        print(f"👋 Stopped {stopped_count} servers!")
 
 if __name__ == "__main__":
-    stop_mcp_servers() 
+    stop_servers() 

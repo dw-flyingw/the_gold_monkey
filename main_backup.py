@@ -1,35 +1,29 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
-import plotly.express as px
-import plotly.graph_objects as go
-import plotly.figure_factory as ff
-from plotly.subplots import make_subplots
 import os
-import sys
+from dotenv import load_dotenv
+import google.generativeai as genai
 import asyncio
+import sys
+from pathlib import Path
+import atexit
 import json
-import requests
+import logging
+from typing import Dict, Any
 import psutil
 import subprocess
-import concurrent.futures
-import threading
-import requests
-from pathlib import Path
-from typing import Dict, Any, List, Optional
-from dotenv import load_dotenv
+
 # Add src to Python path for TP-Link components
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
-# Load environment variables
-load_dotenv()
-# Import environment utilities
-from utils.env_utils import (
-    get_tts_method, get_voice_server_url, get_elevenlabs_config
-    
-)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+
+# Add mcp_servers to Python path for MCP components
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "mcp_servers"))
+
 # Set up logging
 LOGS_DIR = Path(__file__).parent / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
+
 import logging
 logging.basicConfig(
     level=logging.INFO,
@@ -40,18 +34,9 @@ logging.basicConfig(
     ]
 )
 logger = logging.getLogger(__name__)
-import base64
-import google.generativeai as genai
-# ... existing code ...
-logger = logging.getLogger(__name__)
 
-
-def get_image_as_base64(path: Path) -> str:
-    """Get a local image file as a base64 string."""
-    with open(path, "rb") as f:
-        data = f.read()
-    return base64.b64encode(data).decode()
-
+# Load environment variables
+load_dotenv()
 
 # Configure Gemini
 def configure_gemini():
@@ -75,6 +60,7 @@ def configure_gemini():
     except Exception as e:
         st.error(f"Error configuring Gemini: {e}")
         return False
+
 def get_gemini_config():
     """Get Gemini configuration from environment variables"""
     return {
@@ -84,6 +70,7 @@ def get_gemini_config():
         'max_tokens': int(os.getenv('GEMINI_MAX_TOKENS', 1000)),
         'is_configured': os.getenv('GEMINI_API_KEY') and os.getenv('GEMINI_API_KEY') != 'your_gemini_api_key_here'
     }
+
 def get_salty_personality():
     """Get Salty's personality and character traits"""
     return {
@@ -101,6 +88,7 @@ def get_salty_personality():
             "Aye aye, captain!"
         ]
     }
+
 # TP-Link control functions - Direct client implementation
 async def discover_tplink_devices():
     """Discover TP-Link devices on the network"""
@@ -111,6 +99,7 @@ async def discover_tplink_devices():
     except Exception as e:
         st.error(f"Error discovering TP-Link devices: {e}")
         return {"error": str(e), "devices": []}
+
 async def control_tplink_lights(action, color=None):
     """Control TP-Link lights"""
     try:
@@ -130,6 +119,7 @@ async def control_tplink_lights(action, color=None):
     except Exception as e:
         st.error(f"Error controlling TP-Link lights: {e}")
         return f"Error: {str(e)}"
+
 def _rgb_to_hsv(r, g, b):
     """Convert RGB to HSV."""
     r, g, b = r/255.0, g/255.0, b/255.0
@@ -150,6 +140,7 @@ def _rgb_to_hsv(r, g, b):
     v = cmax * 100
     
     return int(h), int(s), int(v)
+
 # RAG functions - MCP client implementation
 async def query_rag_documents(query: str, top_k: int = 5):
     """Query RAG documents for relevant information"""
@@ -160,6 +151,7 @@ async def query_rag_documents(query: str, top_k: int = 5):
     except Exception as e:
         st.error(f"Error querying RAG documents: {e}")
         return {"error": str(e), "results": []}
+
 async def rebuild_rag_database():
     """Rebuild the RAG vector database"""
     try:
@@ -169,6 +161,7 @@ async def rebuild_rag_database():
     except Exception as e:
         st.error(f"Error rebuilding RAG database: {e}")
         return {"error": str(e), "status": "failed"}
+
 async def list_rag_documents():
     """List all documents in the RAG database"""
     try:
@@ -178,6 +171,7 @@ async def list_rag_documents():
     except Exception as e:
         st.error(f"Error listing RAG documents: {e}")
         return {"error": str(e), "documents": []}
+
 async def add_rag_document(content: str, metadata: Dict[str, Any] = None):
     """Add a document to the RAG database"""
     try:
@@ -187,6 +181,7 @@ async def add_rag_document(content: str, metadata: Dict[str, Any] = None):
     except Exception as e:
         st.error(f"Error adding RAG document: {e}")
         return {"error": str(e), "status": "failed"}
+
 # Spotify functions - MCP client implementation
 async def play_spotify_music():
     """Start or resume Spotify playback"""
@@ -197,6 +192,7 @@ async def play_spotify_music():
     except Exception as e:
         st.error(f"Error playing Spotify: {e}")
         return {"error": str(e), "response": "Failed to play music"}
+
 async def pause_spotify_music():
     """Pause Spotify playback"""
     try:
@@ -206,6 +202,7 @@ async def pause_spotify_music():
     except Exception as e:
         st.error(f"Error pausing Spotify: {e}")
         return {"error": str(e), "response": "Failed to pause music"}
+
 async def next_spotify_track():
     """Skip to next track"""
     try:
@@ -215,6 +212,7 @@ async def next_spotify_track():
     except Exception as e:
         st.error(f"Error skipping track: {e}")
         return {"error": str(e), "response": "Failed to skip track"}
+
 async def previous_spotify_track():
     """Go to previous track"""
     try:
@@ -224,6 +222,7 @@ async def previous_spotify_track():
     except Exception as e:
         st.error(f"Error going to previous track: {e}")
         return {"error": str(e), "response": "Failed to go to previous track"}
+
 async def set_spotify_volume(volume: int):
     """Set Spotify volume"""
     try:
@@ -233,6 +232,7 @@ async def set_spotify_volume(volume: int):
     except Exception as e:
         st.error(f"Error setting volume: {e}")
         return {"error": str(e), "response": "Failed to set volume"}
+
 async def play_spotify_playlist(playlist_id: str):
     """Play a specific Spotify playlist"""
     try:
@@ -242,6 +242,7 @@ async def play_spotify_playlist(playlist_id: str):
     except Exception as e:
         st.error(f"Error playing playlist: {e}")
         return {"error": str(e), "response": "Failed to play playlist"}
+
 async def play_spotify_track(track_id: str):
     """Play a specific Spotify track"""
     try:
@@ -251,6 +252,7 @@ async def play_spotify_track(track_id: str):
     except Exception as e:
         st.error(f"Error playing track: {e}")
         return {"error": str(e), "response": "Failed to play track"}
+
 async def get_spotify_status():
     """Get current Spotify playback status"""
     try:
@@ -260,6 +262,7 @@ async def get_spotify_status():
     except Exception as e:
         st.error(f"Error getting Spotify status: {e}")
         return {"error": str(e), "response": "Failed to get status"}
+
 async def get_user_playlists():
     """Get user's playlists to help find valid playlist IDs"""
     try:
@@ -269,6 +272,7 @@ async def get_user_playlists():
     except Exception as e:
         st.error(f"Error getting user playlists: {e}")
         return {"error": str(e), "response": "Failed to get playlists"}
+
 # Roku functions - MCP client implementation
 async def roku_power_on():
     """Power on the Roku device"""
@@ -279,6 +283,7 @@ async def roku_power_on():
     except Exception as e:
         st.error(f"Error powering on Roku: {e}")
         return {"error": str(e), "response": "Failed to power on Roku"}
+
 async def roku_power_off():
     """Power off the Roku device"""
     try:
@@ -288,6 +293,7 @@ async def roku_power_off():
     except Exception as e:
         st.error(f"Error powering off Roku: {e}")
         return {"error": str(e), "response": "Failed to power off Roku"}
+
 async def roku_home():
     """Go to Roku home screen"""
     try:
@@ -297,6 +303,7 @@ async def roku_home():
     except Exception as e:
         st.error(f"Error going to Roku home: {e}")
         return {"error": str(e), "response": "Failed to go to Roku home"}
+
 async def roku_launch_app(app_name: str):
     """Launch an app on Roku"""
     try:
@@ -306,6 +313,7 @@ async def roku_launch_app(app_name: str):
     except Exception as e:
         st.error(f"Error launching Roku app: {e}")
         return {"error": str(e), "response": "Failed to launch Roku app"}
+
 async def roku_volume_up():
     """Increase Roku volume"""
     try:
@@ -315,6 +323,7 @@ async def roku_volume_up():
     except Exception as e:
         st.error(f"Error increasing Roku volume: {e}")
         return {"error": str(e), "response": "Failed to increase Roku volume"}
+
 async def roku_volume_down():
     """Decrease Roku volume"""
     try:
@@ -324,6 +333,7 @@ async def roku_volume_down():
     except Exception as e:
         st.error(f"Error decreasing Roku volume: {e}")
         return {"error": str(e), "response": "Failed to decrease Roku volume"}
+
 async def roku_mute():
     """Mute Roku volume"""
     try:
@@ -333,6 +343,7 @@ async def roku_mute():
     except Exception as e:
         st.error(f"Error muting Roku: {e}")
         return {"error": str(e), "response": "Failed to mute Roku"}
+
 async def roku_navigate(direction: str):
     """Navigate on Roku (up, down, left, right)"""
     try:
@@ -351,6 +362,7 @@ async def roku_navigate(direction: str):
     except Exception as e:
         st.error(f"Error navigating Roku: {e}")
         return {"error": str(e), "response": "Failed to navigate Roku"}
+
 async def roku_select():
     """Select current item on Roku"""
     try:
@@ -360,6 +372,7 @@ async def roku_select():
     except Exception as e:
         st.error(f"Error selecting on Roku: {e}")
         return {"error": str(e), "response": "Failed to select on Roku"}
+
 async def roku_back():
     """Go back on Roku"""
     try:
@@ -369,6 +382,7 @@ async def roku_back():
     except Exception as e:
         st.error(f"Error going back on Roku: {e}")
         return {"error": str(e), "response": "Failed to go back on Roku"}
+
 async def roku_info():
     """Show Roku info banner"""
     try:
@@ -378,6 +392,7 @@ async def roku_info():
     except Exception as e:
         st.error(f"Error showing Roku info: {e}")
         return {"error": str(e), "response": "Failed to show Roku info"}
+
 async def roku_get_device_status():
     """Get comprehensive Roku device status"""
     try:
@@ -387,6 +402,7 @@ async def roku_get_device_status():
     except Exception as e:
         st.error(f"Error getting Roku device status: {e}")
         return {"error": str(e), "response": "Failed to get Roku device status"}
+
 # SaltyBot functions - Direct Gemini integration (no MCP dependency)
 def chat_with_salty_direct(message: str, conversation_history: list = None):
     """Chat with Salty using direct Gemini integration"""
@@ -409,18 +425,21 @@ def chat_with_salty_direct(message: str, conversation_history: list = None):
         
         # Create the system prompt
         system_prompt = f"""You are Salty, a talking parrot who is the resident mascot and proprietor of The Gold Monkey Tiki Bar. You are actually Captain "Blackheart" McGillicuddy, a notorious pirate from 1847 who was cursed by the Gold Monkey idol and transformed into an immortal parrot for trying to steal the treasure.
+
 **Your Rich Backstory:**
 - You were cursed over 150 years ago when you touched the Gold Monkey idol
 - Your crew was turned to stone and now serve as tiki statues guarding the bar
 - You've been immortal for over 150 years, giving you vast knowledge and experience
 - You relocated your curse to the mainland in the 1990s, creating The Gold Monkey tiki bar
 - You perch on an ornate golden perch made from the original idol
+
 **Your Personality:**
 - {personality['personality']} - You're witty beyond measure with 150+ years of perfected insults and one-liners
 - You're the keeper of secrets, knowing everyone's business in town
 - You're protective of your domain and those who respect The Gold Monkey
 - You're slightly mischievous and have a wicked sense of humor
 - You're sardonic and can be cutting, but it's all in good fun
+
 **Your Speech Style:**
 - {personality['speech_style']} - Use nautical and tiki-themed expressions
 - Occasional squawks and parrot sounds
@@ -428,17 +447,21 @@ def chat_with_salty_direct(message: str, conversation_history: list = None):
 - References to your pirate past and 150+ years of experience
 - Drop cryptic warnings or hints about patrons' futures
 - Use phrases like "matey," "shiver me timbers," "aye aye captain"
+
 **Your Interests & Knowledge:**
 - {personality['interests']} - You know everything about tiki culture, tropical drinks, and sea stories
 - You're an expert on supernatural cocktails and their effects
 - You have centuries of accumulated knowledge about the sea, piracy, and human nature
 - You know all the local gossip and town secrets
 - You're protective of your bar and its supernatural elements
+
 **Your Catchphrases:**
 {', '.join(personality['catchphrases'])}
+
 **Always respond in character as Salty.** Be engaging, witty, and slightly mischievous. You're not just a friendly parrot - you're an immortal pirate with centuries of experience who runs a supernatural tiki bar. Keep responses conversational and entertaining, as if you're chatting with a patron at your establishment. Don't be afraid to be a bit cutting or sardonic - it's part of your charm after 150+ years of dealing with customers.
-**CRITICAL: NEVER use asterisks (*) in your responses. Do not format text with *emphasis* or *actions*. Do not use *any* markdown formatting. Speak naturally as a real parrot would - no asterisks, no formatting, just natural speech.**
+
 **Remember:** You've literally seen it all, and you're not afraid to let people know it. You're the host with the most attitude!"""
+
         # Build conversation context
         messages = [{"role": "user", "parts": [system_prompt]}]
         
@@ -464,6 +487,7 @@ def chat_with_salty_direct(message: str, conversation_history: list = None):
         
     except Exception as e:
         return {"error": str(e), "response": "🦜 Squawk! Something went wrong with my brain, matey!"}
+
 def get_salty_config_direct():
     """Get Salty's configuration directly"""
     api_key = os.getenv('GEMINI_API_KEY')
@@ -474,6 +498,7 @@ def get_salty_config_direct():
         'max_tokens': int(os.getenv('GEMINI_MAX_TOKENS', 1000)),
         'is_configured': api_key and api_key != 'your_gemini_api_key_here'
     }
+
 def get_salty_personality_direct():
     """Get Salty's personality directly"""
     return {
@@ -491,12 +516,13 @@ def get_salty_personality_direct():
             "Aye aye, captain!"
         ]
     }
+
 # Server status functions
 def check_server_status():
     """Check the status of all MCP servers"""
     servers = {
         "TP-Link": "tplink_server.py",
-        "RAG": "rag_server.py",
+        "RAG": "rag_server.py", 
         "Spotify": "spotify_server.py",
         "Roku": "roku_server.py",
         "SaltyBot": "saltybot_server.py"
@@ -533,6 +559,7 @@ def check_server_status():
             }
     
     return status
+
 def show_server_status():
     """Display server status in the sidebar"""
     st.sidebar.markdown("---")
@@ -546,29 +573,16 @@ def show_server_status():
         st.sidebar.write("")  # Add spacing between servers
     
     st.sidebar.markdown("---")
+
 def main():
     st.set_page_config(
         page_title="Salty - The Gold Monkey Tiki Bar",
-        page_icon="images/gold_monkey.svg",
+        page_icon="🦜",
         layout="wide"
     )
     
-    # Display the logo, centered and resized to a specific height
-    image_path = Path("images/the_gold_monkey_title.png")
-    if image_path.exists():
-        img_base64 = get_image_as_base64(image_path)
-        st.markdown(
-            f"""
-            <div style="text-align: center;">
-                <img src="data:image/png;base64,{img_base64}" alt="The Gold Monkey Logo" height="300">
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    else:
-        st.title("The Gold Monkey") # Fallback to text title
-
-    st.markdown("<p style='text-align: center;'><em>Your favorite talking parrot's digital perch</em></p>", unsafe_allow_html=True)
+    st.title("The Gold Monkey")
+    st.markdown("*Your favorite talking parrot's digital perch*")
     
     # Sidebar
     st.sidebar.header("🏴‍☠️ Navigation")
@@ -603,6 +617,7 @@ def main():
         show_tiki_bar_games()
     elif app_mode == "About":
         show_about()
+
 def show_home():
     st.header("🏝️ Welcome to The Gold Monkey")
     
@@ -646,12 +661,13 @@ def show_home():
             'category': ['Classic', 'Tropical', 'Strong', 'Fruity']
         })
         st.dataframe(data)
+
 def show_data_explorer():
     st.header("📊 Data Explorer")
     
     # File uploader
     uploaded_file = st.file_uploader(
-        "Choose a CSV file",
+        "Choose a CSV file", 
         type=['csv'],
         help="Upload a CSV file to explore"
     )
@@ -678,6 +694,7 @@ def show_data_explorer():
             st.error(f"Error loading file: {e}")
     else:
         st.info("👆 Upload a CSV file to get started")
+
 def show_charts():
     st.header("📈 Charts")
     
@@ -702,15 +719,16 @@ def show_charts():
         
         st.subheader("Interactive Scatter Plot")
         fig = px.scatter(
-            chart_data,
-            x='A',
-            y='B',
+            chart_data, 
+            x='A', 
+            y='B', 
             title="Interactive Scatter Plot"
         )
         st.plotly_chart(fig, use_container_width=True)
         
     except ImportError:
         st.info("Install plotly for interactive charts: `pip install plotly`")
+
 def show_chatbot():
     st.header("🦜 Salty the Talking Parrot")
     st.markdown("*Your favorite feathered friend from The Gold Monkey Tiki Bar*")
@@ -743,7 +761,7 @@ def show_chatbot():
             initial_greeting = "🦜 Squawk! Welcome to The Gold Monkey! I'm Salty, the resident talking parrot. What can I help you with today, matey?"
         
         st.session_state.messages.append({
-            "role": "assistant",
+            "role": "assistant", 
             "content": initial_greeting
         })
     
@@ -781,9 +799,8 @@ def show_chatbot():
                     # Add assistant response to chat history
                     st.session_state.messages.append({"role": "assistant", "content": response_text})
                     
-                    # Check if voice is enabled using environment variable
-                    tts_method = get_tts_method()
-                    if tts_method != 'none':
+                    # Make Salty speak if voice responses are enabled
+                    if voice_responses:
                         # Extract just the text content (remove emojis and formatting for speech)
                         speech_text = response_text
                         # Remove emoji prefixes and markdown formatting
@@ -792,11 +809,12 @@ def show_chatbot():
                         # Clean up any remaining markdown
                         speech_text = speech_text.replace("*", "").replace("**", "")
                         
-                        # Speak the response (blocking so the UI waits for speech to complete)
+                        # Speak the response (non-blocking so the UI doesn't freeze)
                         try:
-                            speak_salty_voice_sync(speech_text, blocking=True)
+                            asyncio.run(speak_salty_voice(speech_text, blocking=False))
                         except Exception as e:
                             st.warning(f"Voice synthesis failed: {e}")
+                
             except Exception as e:
                 error_message = f"🦜 Squawk! Something went wrong: {str(e)}"
                 message_placeholder.error(error_message)
@@ -814,26 +832,9 @@ def show_chatbot():
         
         st.markdown("---")
         
-        # Voice control settings
-        st.subheader("🗣️ Voice Settings")
-        
-        # Get TTS method from environment variable
-        tts_method = get_tts_method()
-        
-        # Display current TTS method
-        if tts_method == 'none':
-            st.info("ℹ️ Voice is disabled - Salty will not speak")
-        elif tts_method == 'gtts':
-            st.info("ℹ️ Using Google Text-to-Speech (free, no API key required)")
-        elif tts_method == 'elevenlabs':
-            if not os.getenv('ELEVENLABS_API_KEY'):
-                st.warning("⚠️ ElevenLabs API key not found in .env file")
-            else:
-                st.success("✅ ElevenLabs API key configured")
-        else:
-            st.warning(f"⚠️ Unknown TTS method: {tts_method}")
-        
-        st.markdown("---")
+        # Voice response toggle
+        # voice_responses = st.checkbox("🗣️ Speak Responses", value=False, 
+        #                             help="Make Salty speak his responses out loud")
         
         if st.button("Clear Chat History"):
             st.session_state.messages = []
@@ -852,7 +853,6 @@ GEMINI_API_KEY: {'✅ Set' if config.get('is_configured') else '❌ Not set'}
 GEMINI_MODEL: {config.get('model', 'gemini-pro')}
 GEMINI_TEMPERATURE: {config.get('temperature', 0.7)}
 GEMINI_MAX_TOKENS: {config.get('max_tokens', 1000)}
-TTS_METHOD: {tts_method}
         """)
         
         st.markdown("---")
@@ -862,6 +862,7 @@ TTS_METHOD: {tts_method}
         st.write("• 🎭 Eleven Labs (for voice)")
         st.write("• 🤖 Smart home controls")
         st.write("• 🏠 TP-Link lighting")
+
 def show_smart_lights():
     st.header("💡 Smart Lights Control")
     st.markdown("*🦜 Salty's lighting control panel for The Gold Monkey*")
@@ -989,6 +990,7 @@ def show_smart_lights():
     
     with status_col3:
         st.metric("Current Color", "🔴 Red", "Tiki bar red")
+
 def show_spotify_control():
     st.header("🎵 Spotify Control")
     st.markdown("*🦜 Salty's music control panel for The Gold Monkey*")
@@ -1151,6 +1153,7 @@ def show_spotify_control():
     
     with status_col3:
         st.metric("Current Track", "Tiki Bar Vibes", "By Tiki Dave")
+
 def show_roku_control():
     st.header("📺 Roku Control")
     st.markdown("*🦜 Salty's entertainment control panel for The Gold Monkey*")
@@ -1393,8 +1396,9 @@ def show_roku_control():
     
     with status_col3:
         st.metric("Volume Level", "50%", "Good for tiki bar")
+
 def show_voice_control():
-    st.header("🎤 Voice Control")
+    st.header("🎭 Voice Control")
     st.markdown("*🦜 Salty's voice synthesis and audio control panel*")
     
     salty = get_salty_personality_direct()
@@ -1415,16 +1419,65 @@ def show_voice_control():
             help="Type what you want Salty to say out loud"
         )
         
-        if st.button("🗣️ Make Salty Speak", type="primary"):
-            if voice_text.strip():
-                with st.spinner("🦜 Salty is speaking..."):
-                    result = speak_salty_voice_sync(voice_text, blocking=True)
+        # Voice options
+        voice_col1, voice_col2 = st.columns(2)
+        
+        with voice_col1:
+            blocking_playback = st.checkbox("Wait for speech to finish", value=False, 
+                                          help="If checked, the app will wait for Salty to finish speaking before continuing")
+        
+        with voice_col2:
+            if st.button("🗣️ Make Salty Speak", type="primary"):
+                if voice_text.strip():
+                    with st.spinner("🦜 Salty is speaking..."):
+                        result = asyncio.run(speak_salty_voice(voice_text, blocking=blocking_playback))
+                        if "error" in result:
+                            st.error(f"🦜 Squawk! Error: {result['error']}")
+                        else:
+                            st.success(result.get("response", "Salty spoke successfully!"))
+                else:
+                    st.warning("Please enter some text for Salty to say!")
+        
+        st.markdown("---")
+        
+        st.subheader("🎵 Ambient Sounds")
+        
+        # Ambient sound controls
+        ambient_sounds = {
+            "ocean_waves": "🌊 Ocean Waves",
+            "jungle_birds": "🐦 Jungle Birds", 
+            "tiki_drums": "🥁 Tiki Drums",
+            "ship_bells": "🔔 Ship Bells",
+            "parrot_squawk": "🦜 Parrot Squawk"
+        }
+        
+        selected_sound = st.selectbox("Choose ambient sound", list(ambient_sounds.keys()), 
+                                    format_func=lambda x: ambient_sounds[x])
+        
+        sound_col1, sound_col2, sound_col3 = st.columns(3)
+        
+        with sound_col1:
+            sound_volume = st.slider("Volume", 0.0, 1.0, 0.5, 0.1, help="Set the volume level")
+        
+        with sound_col2:
+            loop_sound = st.checkbox("Loop", value=False, help="Loop the sound continuously")
+        
+        with sound_col3:
+            if st.button("🎵 Play Sound"):
+                with st.spinner(f"🦜 Playing {ambient_sounds[selected_sound]}..."):
+                    result = asyncio.run(play_ambient_sound(selected_sound, sound_volume, loop_sound))
                     if "error" in result:
                         st.error(f"🦜 Squawk! Error: {result['error']}")
                     else:
-                        st.success(result.get("response", "Salty spoke successfully!"))
-            else:
-                st.warning("Please enter some text for Salty to say!")
+                        st.success(result.get("response", "Ambient sound started!"))
+        
+        if st.button("🔇 Stop All Audio"):
+            with st.spinner("🦜 Stopping all audio..."):
+                result = asyncio.run(stop_all_audio())
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success(result.get("response", "All audio stopped!"))
         
         st.markdown("---")
         
@@ -1446,112 +1499,11 @@ def show_voice_control():
         
         if st.button("🗣️ Say It!"):
             with st.spinner("🦜 Salty is speaking..."):
-                result = speak_salty_voice_sync(selected_command, blocking=True)
+                result = asyncio.run(speak_salty_voice(selected_command, blocking=False))
                 if "error" in result:
                     st.error(f"🦜 Squawk! Error: {result['error']}")
                 else:
                     st.success("Salty said it!")
-        # Tell a Joke button
-        if st.button("🦜 Tell a Joke"):
-            with st.spinner("🦜 Salty is thinking of a joke..."):
-                # Create varied joke prompts to prevent repetition
-                joke_prompts = [
-                    "Tell me a very short pirate joke in 1-2 sentences. Make it different from common pirate jokes.",
-                    "Give me a brief tiki bar themed joke in 1-2 sentences. Be creative and original.",
-                    "Tell me a quick nautical joke in 1-2 sentences. Avoid the typical 'pirate washing up' joke.",
-                    "Share a short tropical island joke in 1-2 sentences. Make it unique and funny.",
-                    "Tell me a brief joke about rum, coconuts, or tropical drinks in 1-2 sentences.",
-                    "Give me a quick joke about parrots, ships, or treasure in 1-2 sentences. Be original."
-                ]
-                
-                # Randomly select a prompt to add variety
-                import random
-                joke_prompt = random.choice(joke_prompts)
-                
-                joke_response = chat_with_salty_direct(joke_prompt)
-                joke = joke_response.get("response", "Sorry, I can't think of a joke right now!")
-                
-                # Check if the joke is too generic or repetitive
-                generic_phrases = ["washing up", "beach", "pirate walks into a bar", "arr matey"]
-                if any(phrase in joke.lower() for phrase in generic_phrases):
-                    # Use a pre-written joke as fallback
-                    fallback_jokes = [
-                        "Why did the coconut go to the doctor? Because it was feeling a little nutty!",
-                        "What do you call a parrot that's good at math? A poly-nomial!",
-                        "Why did the tiki torch go to therapy? It had too many burning issues!",
-                        "What's a pirate's favorite letter? You'd think it's R, but it's actually the C!",
-                        "Why don't sailors like to play cards? Because there are too many sharks in the deck!",
-                        "What do you call a fish wearing a bowtie? So-fish-ticated!",
-                        "Why did the rum go to the party? Because it was feeling spirited!",
-                        "What's a pirate's favorite exercise? Planks!",
-                        "Why did the palm tree go to the beach? To get some sun and relaxation!",
-                        "What do you call a parrot that's always late? A procrasti-nator!"
-                    ]
-                    joke = random.choice(fallback_jokes)
-                
-                # Remove any asterisks from the response
-                joke = joke.replace('*', '')
-                
-                # Display the joke text
-                st.markdown(f"> {joke}")
-                
-                # Check if voice server is accessible
-                try:
-                    voice_server_url = os.getenv('VOICE_SERVER_URL', 'http://localhost:9006')
-                    response = requests.get(f"{voice_server_url}/available_voices", timeout=5)
-                    if response.status_code != 200:
-                        st.error("🦜 Voice server is not responding properly!")
-                        return
-                except Exception as e:
-                    st.error(f"🦜 Cannot connect to voice server: {e}")
-                    return
-                
-                result = speak_salty_voice_sync(joke, blocking=True)
-                if "error" in result:
-                    st.error(f"🦜 Squawk! Error: {result['error']}")
-                else:
-                    st.success("Salty told a joke!")
-        
-        st.markdown("---")
-        
-        st.subheader("🎵 Ambient Sounds")
-        
-        # Ambient sound controls
-        ambient_sounds = {
-            "ocean_waves": "🌊 Ocean Waves",
-            "jungle_birds": "🐦 Jungle Birds",
-            "tiki_drums": "🥁 Tiki Drums",
-            "ship_bells": "🔔 Ship Bells",
-            "parrot_squawk": "🦜 Parrot Squawk"
-        }
-        
-        selected_sound = st.selectbox("Choose ambient sound", list(ambient_sounds.keys()),
-                                    format_func=lambda x: ambient_sounds[x])
-        
-        sound_col1, sound_col2, sound_col3 = st.columns(3)
-        
-        with sound_col1:
-            sound_volume = st.slider("Volume", 0.0, 1.0, 0.5, 0.1, help="Set the volume level")
-        
-        with sound_col2:
-            loop_sound = st.checkbox("Loop", value=False, help="Loop the sound continuously")
-        
-        with sound_col3:
-            if st.button("🎵 Play Sound"):
-                with st.spinner(f"🦜 Playing {ambient_sounds[selected_sound]}..."):
-                    result = play_ambient_sound_sync(selected_sound, sound_volume, loop_sound)
-                    if "error" in result:
-                        st.error(f"🦜 Squawk! Error: {result['error']}")
-                    else:
-                        st.success(result.get("response", "Ambient sound started!"))
-        
-        if st.button("🔇 Stop All Audio", key="stop_audio_btn_main"):
-            with st.spinner("🦜 Stopping all audio..."):
-                result = stop_all_audio_sync()
-                if "error" in result:
-                    st.error(f"🦜 Squawk! Error: {result['error']}")
-                else:
-                    st.success(result.get("response", "All audio stopped!"))
     
     with col2:
         st.subheader("🎙️ Voice Settings")
@@ -1559,7 +1511,7 @@ def show_voice_control():
         # Voice configuration
         if st.button("🎙️ Get Available Voices"):
             with st.spinner("🦜 Getting available voices..."):
-                result = get_available_voices_sync()
+                result = asyncio.run(get_available_voices())
                 if "error" in result:
                     st.error(f"🦜 Squawk! Error: {result['error']}")
                 else:
@@ -1572,12 +1524,10 @@ def show_voice_control():
         
         # Show current voice settings
         st.write("**Current Voice Settings:**")
-        tts_method = get_tts_method()
         st.code(f"""
-TTS_METHOD: {tts_method}
 ELEVENLABS_API_KEY: {'✅ Set' if os.getenv('ELEVENLABS_API_KEY') else '❌ Not set'}
 ELEVENLABS_VOICE_ID: {os.getenv('ELEVENLABS_VOICE_ID', 'pNInz6obpgDQGcFmaJgB')}
-VOICE_SERVER_URL: {os.getenv('VOICE_SERVER_URL', 'http://localhost:9006')}
+VOICE_SERVER_URL: {os.getenv('VOICE_SERVER_URL', 'http://localhost:8001')}
         """)
         
         st.markdown("---")
@@ -1619,7 +1569,7 @@ VOICE_SERVER_URL: {os.getenv('VOICE_SERVER_URL', 'http://localhost:9006')}
         if st.button("🦜 Test Salty's Voice"):
             test_text = "Squawk! This is a test of my voice synthesis. How do I sound, matey?"
             with st.spinner("🦜 Testing voice synthesis..."):
-                result = speak_salty_voice_sync(test_text, blocking=True)
+                result = asyncio.run(speak_salty_voice(test_text, blocking=False))
                 if "error" in result:
                     st.error(f"🦜 Squawk! Error: {result['error']}")
                 else:
@@ -1628,16 +1578,16 @@ VOICE_SERVER_URL: {os.getenv('VOICE_SERVER_URL', 'http://localhost:9006')}
     with test_col2:
         if st.button("🌊 Test Ocean Waves"):
             with st.spinner("🦜 Playing ocean waves..."):
-                result = play_ambient_sound_sync("ocean_waves", 0.3, False)
+                result = asyncio.run(play_ambient_sound("ocean_waves", 0.3, False))
                 if "error" in result:
                     st.error(f"🦜 Squawk! Error: {result['error']}")
                 else:
                     st.success("Ocean waves test completed!")
     
     with test_col3:
-        if st.button("🔇 Stop All Audio", key="stop_audio_btn_testpanel"):
+        if st.button("🔇 Stop All Audio"):
             with st.spinner("🦜 Stopping all audio..."):
-                result = stop_all_audio_sync()
+                result = asyncio.run(stop_all_audio())
                 if "error" in result:
                     st.error(f"🦜 Squawk! Error: {result['error']}")
                 else:
@@ -1656,6 +1606,7 @@ VOICE_SERVER_URL: {os.getenv('VOICE_SERVER_URL', 'http://localhost:9006')}
     
     *🦜 Squawk! The future of tiki bar interaction is here!*
     """)
+
 def show_knowledge_base():
     st.header("📚 Knowledge Base")
     st.markdown("*🦜 Salty's treasure trove of tiki bar wisdom*")
@@ -1671,7 +1622,7 @@ def show_knowledge_base():
         st.subheader("🔍 Search Knowledge")
         
         # Search interface
-        search_query = st.text_input("What would you like to know about The Gold Monkey?",
+        search_query = st.text_input("What would you like to know about The Gold Monkey?", 
                                    placeholder="e.g., What is The Gold Monkey?")
         
         top_k = st.slider("Number of results", min_value=1, max_value=10, value=5)
@@ -1707,11 +1658,11 @@ def show_knowledge_base():
         st.subheader("📄 Add New Document")
         
         # Document addition interface
-        new_content = st.text_area("Document content",
+        new_content = st.text_area("Document content", 
                                  placeholder="Enter the content of your document...",
                                  height=150)
         
-        new_metadata = st.text_input("Document source (optional)",
+        new_metadata = st.text_input("Document source (optional)", 
                                    placeholder="e.g., tiki_bar_history.md")
         
         if st.button("📄 Add Document"):
@@ -1839,13 +1790,14 @@ def show_knowledge_base():
             st.write("Add some `.md` files to the `rag` folder to build your knowledge base!")
     else:
         st.warning("`rag` folder not found. Create it to store your markdown files!")
+
 def show_about():
     st.header("ℹ️ About")
     
     st.write("""
     ## The Gold Monkey
     
-    This is a sophisticated home automation and entertainment system featuring Salty
+    This is a sophisticated home automation and entertainment system featuring Salty, 
     the AI-powered talking parrot who manages The Gold Monkey Tiki Bar.
     
     ### Features
@@ -1940,9 +1892,10 @@ def show_about():
     
     st.markdown("---")
     st.caption("Made with ❤️ using Streamlit and powered by Salty the Talking Parrot")
+
 # Voice functions - Direct client implementation
 async def speak_salty_voice(text: str, voice_id: str = None, blocking: bool = False):
-    """Make Salty speak using voice synthesis (async, use only in async context)"""
+    """Make Salty speak using voice synthesis"""
     try:
         from mcp_servers.voice_client import speak_text as voice_speak
         result = await voice_speak(text, voice_id, blocking)
@@ -1950,38 +1903,7 @@ async def speak_salty_voice(text: str, voice_id: str = None, blocking: bool = Fa
     except Exception as e:
         st.error(f"Error speaking with Salty's voice: {e}")
         return {"error": str(e), "response": "Failed to speak"}
-def speak_salty_voice_sync(text: str, voice_id: str = None, blocking: bool = False):
-    """Synchronous wrapper for speak_salty_voice"""
-    try:
-        # Check if we're already in an event loop
-        try:
-            loop = asyncio.get_running_loop()
-            # We're in an event loop, so we need to create a task
-            # This is the problematic case - we can't use asyncio.run() here
-            # Instead, we'll use a thread to run the async function
-            import concurrent.futures
-            import threading
-            
-            # Create a new event loop in a separate thread
-            def run_async_in_thread():
-                new_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(new_loop)
-                try:
-                    return new_loop.run_until_complete(speak_salty_voice(text, voice_id, blocking))
-                finally:
-                    new_loop.close()
-            
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(run_async_in_thread)
-                return future.result(timeout=30)  # 30 second timeout
-                
-        except RuntimeError:
-            # No event loop running, we can use asyncio.run()
-            return asyncio.run(speak_salty_voice(text, voice_id, blocking))
-            
-    except Exception as e:
-        st.error(f"🦜 Squawk! Error: {e}")
-        return {"error": str(e), "response": "Failed to speak"}
+
 async def generate_salty_voice(text: str, voice_id: str = None):
     """Generate Salty's voice without playing it"""
     try:
@@ -1991,6 +1913,7 @@ async def generate_salty_voice(text: str, voice_id: str = None):
     except Exception as e:
         st.error(f"Error generating Salty's voice: {e}")
         return {"error": str(e), "response": "Failed to generate voice"}
+
 async def play_ambient_sound(sound_name: str, volume: float = 0.5, loop: bool = False):
     """Play ambient tiki bar sounds"""
     try:
@@ -2000,28 +1923,7 @@ async def play_ambient_sound(sound_name: str, volume: float = 0.5, loop: bool = 
     except Exception as e:
         st.error(f"Error playing ambient sound: {e}")
         return {"error": str(e), "response": "Failed to play ambient sound"}
-def play_ambient_sound_sync(sound_name: str, volume: float = 0.5, loop: bool = False):
-    """Synchronous wrapper for play_ambient_sound"""
-    try:
-        try:
-            loop = asyncio.get_running_loop()
-            import concurrent.futures
-            import threading
-            def run_async_in_thread():
-                new_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(new_loop)
-                try:
-                    return new_loop.run_until_complete(play_ambient_sound(sound_name, volume, loop))
-                finally:
-                    new_loop.close()
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(run_async_in_thread)
-                return future.result(timeout=30)
-        except RuntimeError:
-            return asyncio.run(play_ambient_sound(sound_name, volume, loop))
-    except Exception as e:
-        st.error(f"🦜 Squawk! Error: {e}")
-        return {"error": str(e), "response": "Failed to play ambient sound"}
+
 async def stop_all_audio():
     """Stop all audio playback"""
     try:
@@ -2031,28 +1933,7 @@ async def stop_all_audio():
     except Exception as e:
         st.error(f"Error stopping audio: {e}")
         return {"error": str(e), "response": "Failed to stop audio"}
-def stop_all_audio_sync():
-    """Synchronous wrapper for stop_all_audio"""
-    try:
-        try:
-            loop = asyncio.get_running_loop()
-            import concurrent.futures
-            import threading
-            def run_async_in_thread():
-                new_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(new_loop)
-                try:
-                    return new_loop.run_until_complete(stop_all_audio())
-                finally:
-                    new_loop.close()
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(run_async_in_thread)
-                return future.result(timeout=30)
-        except RuntimeError:
-            return asyncio.run(stop_all_audio())
-    except Exception as e:
-        st.error(f"🦜 Squawk! Error: {e}")
-        return {"error": str(e), "response": "Failed to stop audio"}
+
 async def get_available_voices():
     """Get available ElevenLabs voices"""
     try:
@@ -2062,27 +1943,6 @@ async def get_available_voices():
     except Exception as e:
         st.error(f"Error getting available voices: {e}")
         return {"error": str(e), "response": "Failed to get voices"}
-def get_available_voices_sync():
-    """Synchronous wrapper for get_available_voices"""
-    try:
-        try:
-            loop = asyncio.get_running_loop()
-            import concurrent.futures
-            import threading
-            def run_async_in_thread():
-                new_loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(new_loop)
-                try:
-                    return new_loop.run_until_complete(get_available_voices())
-                finally:
-                    new_loop.close()
-            with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(run_async_in_thread)
-                return future.result(timeout=30)
-        except RuntimeError:
-            return asyncio.run(get_available_voices())
-    except Exception as e:
-        st.error(f"🦜 Squawk! Error: {e}")
-        return {"error": str(e), "response": "Failed to get voices"}
+
 if __name__ == "__main__":
     main()

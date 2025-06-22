@@ -218,7 +218,16 @@ class SpotifyClient:
                 playlist_name = playlist.get('name', 'Unknown')
                 track_count = playlist.get('tracks', {}).get('total', 0)
                 playlist_uri = playlist.get('uri', f"spotify:playlist:{clean_playlist_id}")
+                is_public = playlist.get('public', True)
+                owner = playlist.get('owner', {}).get('display_name', 'Unknown')
+                
                 logger.info(f"Found playlist: {playlist_name} with {track_count} tracks, URI: {playlist_uri}")
+                logger.info(f"Playlist owner: {owner}, Public: {is_public}")
+                
+                # Check if playlist is empty
+                if track_count == 0:
+                    return {"error": f"Playlist '{playlist_name}' is empty. Please add some tracks to the playlist first."}
+                
             except Exception as e:
                 logger.error(f"Playlist validation failed for ID '{clean_playlist_id}': {e}")
                 return {"error": f"Invalid playlist ID '{clean_playlist_id}'. Please check your playlist ID in the .env file. Error: {str(e)}"}
@@ -240,14 +249,21 @@ class SpotifyClient:
                 await self._find_and_transfer_to_default_speaker()
                 # Wait a moment for the transfer
                 await asyncio.sleep(2)
+                
+                # Check again for active device
+                devices = self.sp.devices()
+                for device in devices['devices']:
+                    if device.get('is_active', False):
+                        active_device = device
+                        break
             
             # Try multiple approaches to start playback
             playback_attempts = [
-                # Method 1: Use the playlist URI directly
+                # Method 1: Use the playlist URI directly (most common approach)
                 lambda: self.sp.start_playback(context_uri=playlist_uri),
                 # Method 2: Use the playlist URI with explicit device
                 lambda: self.sp.start_playback(context_uri=playlist_uri, device_id=active_device['id']) if active_device else None,
-                # Method 3: Get tracks and play them directly
+                # Method 3: Get tracks and play them directly (fallback method)
                 lambda: self._play_playlist_tracks(clean_playlist_id, playlist_name),
                 # Method 4: Try with a different URI format
                 lambda: self.sp.start_playback(context_uri=f"spotify:playlist:{clean_playlist_id}")
@@ -260,15 +276,73 @@ class SpotifyClient:
                     result = attempt()
                     if result is not None:  # Some methods return None on success
                         return result
+                    
+                    # Check if playback actually started
+                    logger.info("Playback method completed, checking status...")
+                    await asyncio.sleep(1)  # Wait a moment for playback to start
+                    
+                    try:
+                        current_playback = self.sp.current_playback()
+                        if current_playback and current_playback.get('is_playing', False):
+                            logger.info("Playback confirmed as active!")
+                            return {"response": f"🎵 Squawk! Playing playlist '{playlist_name}' ({track_count} tracks), matey!"}
+                        else:
+                            logger.warning(f"Playback method {i+1} completed but no active playback detected")
+                            # Try to get more info about what happened
+                            devices = self.sp.devices()
+                            active_devices = [d for d in devices['devices'] if d.get('is_active', False)]
+                            logger.info(f"Active devices: {[d['name'] for d in active_devices]}")
+                            
+                    except Exception as status_error:
+                        logger.error(f"Error checking playback status: {status_error}")
+                    
                     return {"response": f"🎵 Squawk! Playing playlist '{playlist_name}' ({track_count} tracks), matey!"}
+                    
                 except Exception as e:
                     last_error = e
-                    logger.warning(f"Playback method {i+1} failed: {e}")
-                    continue
+                    error_str = str(e)
+                    logger.error(f"Playback method {i+1} failed with error: {error_str}")
+                    
+                    # Check for specific error types
+                    if "NO_ACTIVE_DEVICE" in error_str:
+                        logger.info("No active device error, trying to transfer...")
+                        await self._find_and_transfer_to_default_speaker()
+                        await asyncio.sleep(3)
+                        continue
+                    elif "Invalid context uri" in error_str or "400" in error_str:
+                        logger.error(f"Invalid context URI error for playlist {clean_playlist_id}")
+                        # This is likely a playlist access issue
+                        return {"error": f"Invalid context URI error for playlist '{playlist_name}'. This usually means:\n"
+                                       f"• The playlist is private and not accessible\n"
+                                       f"• You don't have permission to access this playlist\n"
+                                       f"• The playlist ID is incorrect\n"
+                                       f"• Try using a public playlist or check the playlist ID"}
+                    elif "403" in error_str:
+                        logger.error("403 Forbidden error - likely a permissions issue")
+                        return {"error": f"Permission denied for playlist '{playlist_name}'. This usually means:\n"
+                                       f"• You don't have permission to access this playlist\n"
+                                       f"• The playlist is private and not shared with your account\n"
+                                       f"• Your Spotify account doesn't have the required permissions"}
+                    elif "404" in error_str:
+                        logger.error("404 Not Found error - playlist doesn't exist")
+                        return {"error": f"Playlist '{playlist_name}' not found. This usually means:\n"
+                                       f"• The playlist has been deleted or made private\n"
+                                       f"• The playlist ID is incorrect\n"
+                                       f"• The playlist owner has changed permissions"}
+                    elif "429" in error_str:
+                        logger.error("429 Rate limit exceeded")
+                        return {"error": "Rate limit exceeded. Please wait a moment and try again."}
+                    elif "500" in error_str or "502" in error_str or "503" in error_str:
+                        logger.error(f"Spotify server error: {error_str}")
+                        return {"error": f"Spotify server error: {error_str}. Please try again later."}
+                    else:
+                        logger.error(f"Unknown playback error: {error_str}")
+                        continue
             
             # If all methods failed, provide detailed error information
             error_msg = f"Could not start playlist playback after trying multiple methods. "
             error_msg += f"Playlist: {playlist_name} (ID: {clean_playlist_id}) "
+            error_msg += f"Owner: {owner}, Public: {is_public}, Tracks: {track_count} "
             error_msg += f"Last error: {str(last_error)} "
             error_msg += "Please ensure Spotify is open on a device and the playlist is accessible."
             
@@ -499,6 +573,44 @@ class SpotifyClient:
             logger.error(f"Error testing playlist access: {e}", exc_info=True)
             return {"error": f"Error testing playlist access: {str(e)}"}
 
+    async def get_user_playlists(self) -> Dict[str, Any]:
+        """Get user's playlists to help find valid playlist IDs"""
+        try:
+            if not self.sp:
+                return {"error": "Spotify client not initialized"}
+            
+            # Get user's playlists
+            playlists = self.sp.current_user_playlists(limit=50)
+            
+            if not playlists or not playlists.get('items'):
+                return {"response": "No playlists found. Create a playlist in Spotify first."}
+            
+            result_text = f"Your Spotify playlists ({len(playlists['items'])}):\n\n"
+            
+            for i, playlist in enumerate(playlists['items'], 1):
+                name = playlist.get('name', 'Unknown')
+                playlist_id = playlist.get('id', 'Unknown')
+                track_count = playlist.get('tracks', {}).get('total', 0)
+                is_public = playlist.get('public', True)
+                owner = playlist.get('owner', {}).get('display_name', 'Unknown')
+                
+                result_text += f"{i}. **{name}**\n"
+                result_text += f"   🆔 ID: `{playlist_id}`\n"
+                result_text += f"   🎵 Tracks: {track_count}\n"
+                result_text += f"   👤 Owner: {owner}\n"
+                result_text += f"   🌐 Public: {'Yes' if is_public else 'No'}\n"
+                result_text += f"   🔗 URI: `spotify:playlist:{playlist_id}`\n\n"
+            
+            result_text += "\n💡 **To use a playlist in your .env file:**\n"
+            result_text += "```\nSPOTIFY_TIKI_PLAYLIST_ID=\"your_playlist_id_here\"\n```\n"
+            result_text += "🦜 **Tip:** Use public playlists for best compatibility!"
+            
+            return {"response": result_text.strip()}
+            
+        except Exception as e:
+            logger.error(f"Error getting user playlists: {e}", exc_info=True)
+            return {"error": f"Error getting user playlists: {str(e)}"}
+
 # Global client instance
 spotify_client = SpotifyClient()
 
@@ -546,6 +658,10 @@ async def get_available_devices() -> Dict[str, Any]:
 async def test_playlist_access(playlist_id: str) -> Dict[str, Any]:
     """Test playlist access and get detailed information for debugging"""
     return await spotify_client.test_playlist_access(playlist_id)
+
+async def get_user_playlists() -> Dict[str, Any]:
+    """Get user's playlists to help find valid playlist IDs"""
+    return await spotify_client.get_user_playlists()
 
 # Test function
 async def test():

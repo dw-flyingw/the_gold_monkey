@@ -1,7 +1,7 @@
 [project]
 name = "salty"
 version = "0.1.0"
-description = "Add your description here"
+description = "The Gold Monkey"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -22,4 +22,32 @@ dependencies = [
     "mcp[cli]>=1.9.4",
     "spotipy>=2.23.0",
     "psutils>=3.3.10",
+    # Voice and Audio Integration
+    "elevenlabs>=0.2.26",
+    "pygame>=2.5.0",
+    "pyaudio>=0.2.11",
+    "librosa>=0.10.1",
+    "sounddevice>=0.4.6",
+    "speechrecognition>=3.10.0",
+    "pyttsx3>=2.90",
+    "httpx>=0.25.0",
+    # Additional Audio Processing
+    "scipy>=1.11.0",
+    "matplotlib>=3.7.0",
+    # GPIO and Hardware Control (for future Raspberry Pi)
+    "RPi.GPIO>=0.7.1; sys_platform == 'linux'",
+    "adafruit-circuitpython-dht>=3.7.0; sys_platform == 'linux'",
+    "adafruit-circuitpython-pca9685>=3.4.0; sys_platform == 'linux'",
+    # Computer Vision (for future features)
+    "opencv-python>=4.8.0",
+    "pillow>=10.0.0",
+    # Serial Communication
+    "pyserial>=3.5",
+    # WebSocket support
+    "websockets>=11.0.3",
+    # Additional AI capabilities
+    "openai>=1.3.0",
+    "anthropic>=0.7.0",
+    "langchain>=0.0.350",
+    "soundfile",
 ]
