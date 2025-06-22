@@ -204,7 +204,7 @@ class VoiceServer:
         
         # First, split text into sentences while preserving special patterns
         pattern = re.compile(
-            r'(\b(?:why\s.*?\?|what\sdo\syou\scall.*?\?|how\sdo\syou.*?\?|knock\sknock.*?))|'  # Jokes
+            r'(\b(?:why\s+(?:did|does|do|is|are|was|were).*?\?|what\s+(?:do\s+you\s+call|is|are|was|were).*?\?|how\s+(?:do\s+you|many|much|long|far|often).*?\?|knock\sknock.*?))|'  # Jokes
             r'(\bsqu+a+w+k+\b)|'  # Squawk
             r'(\bscree+e+c+h+\b)',  # Screech
             re.IGNORECASE
@@ -225,7 +225,7 @@ class VoiceServer:
                 if '?' in joke:
                     setup, punchline = joke.split('?', 1)
                     parts.append({'type': 'text', 'content': setup + '?'})
-                    parts.append({'type': 'pause', 'duration': 1.5})  # Dramatic pause for jokes
+                    parts.append({'type': 'pause', 'duration': 2.0})  # Dramatic pause for jokes
                     parts.append({'type': 'text', 'content': punchline.strip()})
                 else:
                     parts.append({'type': 'text', 'content': joke})

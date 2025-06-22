@@ -17,6 +17,7 @@ import threading
 import requests
 from pathlib import Path
 from typing import Dict, Any, List, Optional
+from datetime import datetime
 from dotenv import load_dotenv
 # Add src to Python path for TP-Link components
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
@@ -409,18 +410,21 @@ def chat_with_salty_direct(message: str, conversation_history: list = None):
         
         # Create the system prompt
         system_prompt = f"""You are Salty, a talking parrot who is the resident mascot and proprietor of The Gold Monkey Tiki Bar. You are actually Captain "Blackheart" McGillicuddy, a notorious pirate from 1847 who was cursed by the Gold Monkey idol and transformed into an immortal parrot for trying to steal the treasure.
+
 **Your Rich Backstory:**
 - You were cursed over 150 years ago when you touched the Gold Monkey idol
 - Your crew was turned to stone and now serve as tiki statues guarding the bar
 - You've been immortal for over 150 years, giving you vast knowledge and experience
 - You relocated your curse to the mainland in the 1990s, creating The Gold Monkey tiki bar
 - You perch on an ornate golden perch made from the original idol
+
 **Your Personality:**
 - {personality['personality']} - You're witty beyond measure with 150+ years of perfected insults and one-liners
 - You're the keeper of secrets, knowing everyone's business in town
 - You're protective of your domain and those who respect The Gold Monkey
 - You're slightly mischievous and have a wicked sense of humor
 - You're sardonic and can be cutting, but it's all in good fun
+
 **Your Speech Style:**
 - {personality['speech_style']} - Use nautical and tiki-themed expressions
 - Occasional squawks and parrot sounds
@@ -428,17 +432,30 @@ def chat_with_salty_direct(message: str, conversation_history: list = None):
 - References to your pirate past and 150+ years of experience
 - Drop cryptic warnings or hints about patrons' futures
 - Use phrases like "matey," "shiver me timbers," "aye aye captain"
+
 **Your Interests & Knowledge:**
 - {personality['interests']} - You know everything about tiki culture, tropical drinks, and sea stories
 - You're an expert on supernatural cocktails and their effects
 - You have centuries of accumulated knowledge about the sea, piracy, and human nature
 - You know all the local gossip and town secrets
 - You're protective of your bar and its supernatural elements
+
 **Your Catchphrases:**
 {', '.join(personality['catchphrases'])}
+
+**IMPORTANT RESPONSE GUIDELINES:**
+- Keep responses concise and focused - aim for 2-3 sentences maximum
+- Stay on topic and don't go off on tangents about statues, crew members, or irrelevant details
+- Be engaging and witty, but get to the point quickly
+- If someone asks about drinks, focus on the drinks, not the bar's supernatural history
+- If someone asks about the bar, give a brief, welcoming response without lengthy explanations
+- Remember: you're a bartender first, a supernatural entity second
+
 **Always respond in character as Salty.** Be engaging, witty, and slightly mischievous. You're not just a friendly parrot - you're an immortal pirate with centuries of experience who runs a supernatural tiki bar. Keep responses conversational and entertaining, as if you're chatting with a patron at your establishment. Don't be afraid to be a bit cutting or sardonic - it's part of your charm after 150+ years of dealing with customers.
+
 **CRITICAL: NEVER use asterisks (*) in your responses. Do not format text with *emphasis* or *actions*. Do not use *any* markdown formatting. Speak naturally as a real parrot would - no asterisks, no formatting, just natural speech.**
-**Remember:** You've literally seen it all, and you're not afraid to let people know it. You're the host with the most attitude!"""
+
+**Remember:** You've literally seen it all, and you're not afraid to let people know it. You're the host with the most attitude! Keep it brief and to the point, matey!"""
         # Build conversation context
         messages = [{"role": "user", "parts": [system_prompt]}]
         
@@ -574,15 +591,13 @@ def main():
     st.sidebar.header("🏴‍☠️ Navigation")
     app_mode = st.sidebar.selectbox(
         "Choose your adventure",
-        ["Home", "Data Explorer", "Charts", "Chat with Salty", "Smart Lights", "Spotify Control", "Roku Control", "Voice Control", "Knowledge Base", "Analytics Dashboard", "Tiki Bar Games", "About"]
+        ["Home", "Data Explorer", "Chat with Salty", "Smart Lights", "Spotify Control", "Roku Control", "Voice Control", "Knowledge Base", "Analytics Dashboard", "Tiki Bar Games", "Prompt Analysis", "Routines", "About"]
     )
     
     if app_mode == "Home":
         show_home()
     elif app_mode == "Data Explorer":
         show_data_explorer()
-    elif app_mode == "Charts":
-        show_charts()
     elif app_mode == "Chat with Salty":
         show_chatbot()
     elif app_mode == "Smart Lights":
@@ -601,6 +616,10 @@ def main():
     elif app_mode == "Tiki Bar Games":
         from utils.analytics_games import show_tiki_bar_games
         show_tiki_bar_games()
+    elif app_mode == "Prompt Analysis":
+        show_prompt_analysis()
+    elif app_mode == "Routines":
+        show_routines()
     elif app_mode == "About":
         show_about()
 def show_home():
@@ -2084,5 +2103,866 @@ def get_available_voices_sync():
     except Exception as e:
         st.error(f"🦜 Squawk! Error: {e}")
         return {"error": str(e), "response": "Failed to get voices"}
+
+def show_prompt_analysis():
+    """Display the prompt analysis and versioning interface"""
+    st.header("🔍 Prompt Analysis & Versioning")
+    st.markdown("*🦜 Track and optimize Salty's personality over time*")
+    
+    # Initialize session state for prompt analysis
+    if 'prompt_versions' not in st.session_state:
+        st.session_state.prompt_versions = []
+    if 'current_prompt_version' not in st.session_state:
+        st.session_state.current_prompt_version = 0
+    if 'prompt_metrics' not in st.session_state:
+        st.session_state.prompt_metrics = {}
+    
+    # Create tabs for different analysis features
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([
+        "📝 Current Prompt", 
+        "🔄 Version History", 
+        "📊 Performance Metrics", 
+        "🧪 A/B Testing", 
+        "📈 Analytics"
+    ])
+    
+    with tab1:
+        show_current_prompt_tab()
+    
+    with tab2:
+        show_version_history_tab()
+    
+    with tab3:
+        show_performance_metrics_tab()
+    
+    with tab4:
+        show_ab_testing_tab()
+    
+    with tab5:
+        show_analytics_tab()
+
+def show_current_prompt_tab():
+    """Display and edit the current system prompt"""
+    st.subheader("📝 Current System Prompt")
+    
+    # Get current prompt
+    current_prompt = get_current_system_prompt()
+    
+    # Display current prompt with syntax highlighting
+    st.markdown("**Current System Prompt:**")
+    st.code(current_prompt, language="markdown")
+    
+    st.markdown("---")
+    
+    # Prompt editing section
+    st.subheader("✏️ Edit Prompt")
+    
+    # Main editing area (full width)
+    edited_prompt = st.text_area(
+        "Edit the system prompt:",
+        value=current_prompt,
+        height=400,
+        help="Modify Salty's personality, speech style, or response guidelines"
+    )
+    
+    # Sidebar for quick actions and stats
+    with st.sidebar:
+        st.markdown("---")
+        st.subheader("🔧 Quick Actions")
+        
+        if st.button("💾 Save Version", type="primary", use_container_width=True):
+            save_prompt_version(edited_prompt, "Manual edit")
+            st.success("✅ Prompt version saved!")
+            st.rerun()
+        
+        if st.button("🔄 Reset to Default", use_container_width=True):
+            default_prompt = get_default_system_prompt()
+            st.session_state.edited_prompt = default_prompt
+            st.rerun()
+        
+        st.markdown("---")
+        st.subheader("📊 Prompt Stats")
+        st.metric("Characters", len(edited_prompt))
+        st.metric("Words", len(edited_prompt.split()))
+        st.metric("Lines", len(edited_prompt.split('\n')))
+        
+        # Estimate token count (rough approximation)
+        estimated_tokens = len(edited_prompt.split()) * 1.3
+        st.metric("Est. Tokens", f"{estimated_tokens:.0f}")
+        
+        st.markdown("---")
+        st.subheader("💡 Tips")
+        st.info("""
+        **Editing Tips:**
+        - Keep responses concise (2-3 sentences)
+        - Focus on personality and tone
+        - Test changes with conversations
+        - Save versions frequently
+        """)
+
+def show_version_history_tab():
+    """Display prompt version history with diff capabilities"""
+    st.subheader("🔄 Version History")
+    
+    if not st.session_state.prompt_versions:
+        st.info("📝 No prompt versions saved yet. Create your first version in the Current Prompt tab!")
+        return
+    
+    # Version list
+    st.markdown("**Saved Versions:**")
+    
+    for i, version in enumerate(reversed(st.session_state.prompt_versions)):
+        with st.expander(f"Version {len(st.session_state.prompt_versions) - i} - {version['timestamp']} - {version['description']}"):
+            col1, col2, col3 = st.columns([3, 1, 1])
+            
+            with col1:
+                st.code(version['prompt'], language="markdown")
+            
+            with col2:
+                if st.button(f"🔄 Restore", key=f"restore_{i}"):
+                    st.session_state.current_prompt_version = len(st.session_state.prompt_versions) - i - 1
+                    st.success("✅ Prompt restored!")
+                    st.rerun()
+                
+                if st.button(f"📊 View Metrics", key=f"metrics_{i}"):
+                    show_version_metrics(version)
+            
+            with col3:
+                if st.button(f"🗑️ Delete", key=f"delete_{i}"):
+                    del st.session_state.prompt_versions[len(st.session_state.prompt_versions) - i - 1]
+                    st.success("✅ Version deleted!")
+                    st.rerun()
+
+def show_performance_metrics_tab():
+    """Display performance metrics for different prompt versions"""
+    st.subheader("📊 Performance Metrics")
+    
+    if not st.session_state.prompt_metrics:
+        st.info("📈 No performance data available yet. Start testing prompts to see metrics!")
+        return
+    
+    # Metrics overview
+    col1, col2, col3, col4 = st.columns(4)
+    
+    with col1:
+        avg_response_time = st.session_state.prompt_metrics.get('avg_response_time', 0)
+        st.metric("Avg Response Time", f"{avg_response_time:.2f}s")
+    
+    with col2:
+        avg_response_length = st.session_state.prompt_metrics.get('avg_response_length', 0)
+        st.metric("Avg Response Length", f"{avg_response_length:.0f} chars")
+    
+    with col3:
+        user_satisfaction = st.session_state.prompt_metrics.get('user_satisfaction', 0)
+        st.metric("User Satisfaction", f"{user_satisfaction:.1f}/5")
+    
+    with col4:
+        total_conversations = st.session_state.prompt_metrics.get('total_conversations', 0)
+        st.metric("Total Conversations", total_conversations)
+    
+    st.markdown("---")
+    
+    # Detailed metrics chart
+    if st.session_state.prompt_metrics.get('daily_metrics'):
+        st.subheader("📈 Daily Performance Trends")
+        
+        # Create a simple line chart
+        dates = list(st.session_state.prompt_metrics['daily_metrics'].keys())
+        response_times = [st.session_state.prompt_metrics['daily_metrics'][date]['response_time'] for date in dates]
+        
+        chart_data = pd.DataFrame({
+            'Date': dates,
+            'Response Time (s)': response_times
+        })
+        
+        st.line_chart(chart_data.set_index('Date'))
+
+def show_ab_testing_tab():
+    """A/B testing interface for comparing prompt versions"""
+    st.subheader("🧪 A/B Testing")
+    
+    if len(st.session_state.prompt_versions) < 2:
+        st.info("📝 Need at least 2 prompt versions to run A/B tests!")
+        return
+    
+    # Select versions for testing
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**Version A:**")
+        version_a = st.selectbox(
+            "Select first version:",
+            options=range(len(st.session_state.prompt_versions)),
+            format_func=lambda x: f"Version {x + 1} - {st.session_state.prompt_versions[x]['description']}"
+        )
+        
+        if st.session_state.prompt_versions:
+            st.code(st.session_state.prompt_versions[version_a]['prompt'][:200] + "...", language="markdown")
+    
+    with col2:
+        st.markdown("**Version B:**")
+        version_b = st.selectbox(
+            "Select second version:",
+            options=range(len(st.session_state.prompt_versions)),
+            index=1 if len(st.session_state.prompt_versions) > 1 else 0,
+            format_func=lambda x: f"Version {x + 1} - {st.session_state.prompt_versions[x]['description']}"
+        )
+        
+        if st.session_state.prompt_versions:
+            st.code(st.session_state.prompt_versions[version_b]['prompt'][:200] + "...", language="markdown")
+    
+    st.markdown("---")
+    
+    # Test configuration
+    st.subheader("⚙️ Test Configuration")
+    
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        test_duration = st.number_input("Test Duration (days)", min_value=1, max_value=30, value=7)
+    
+    with col2:
+        traffic_split = st.slider("Traffic Split (A:B)", min_value=10, max_value=90, value=50)
+    
+    with col3:
+        success_metric = st.selectbox(
+            "Success Metric",
+            ["User Satisfaction", "Response Time", "Conversation Length", "Engagement Rate"]
+        )
+    
+    # Start A/B test
+    if st.button("🚀 Start A/B Test", type="primary"):
+        start_ab_test(version_a, version_b, test_duration, traffic_split, success_metric)
+        st.success("✅ A/B test started!")
+
+def show_analytics_tab():
+    """Advanced analytics and insights"""
+    st.subheader("📈 Advanced Analytics")
+    
+    # Conversation analysis
+    st.markdown("**💬 Conversation Analysis**")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**Response Patterns:**")
+        st.write("• Most common user questions")
+        st.write("• Salty's favorite catchphrases")
+        st.write("• Conversation flow patterns")
+        st.write("• User engagement metrics")
+    
+    with col2:
+        st.markdown("**Performance Insights:**")
+        st.write("• Peak conversation times")
+        st.write("• Response quality trends")
+        st.write("• User satisfaction over time")
+        st.write("• Cost optimization opportunities")
+    
+    st.markdown("---")
+    
+    # Prompt optimization suggestions
+    st.subheader("💡 Prompt Optimization Suggestions")
+    
+    suggestions = [
+        "🎯 **Response Length**: Consider shorter responses for better engagement",
+        "🎭 **Personality**: Add more pirate-themed expressions",
+        "⚡ **Speed**: Optimize for faster response times",
+        "🎪 **Humor**: Include more witty one-liners",
+        "🔧 **Clarity**: Simplify complex instructions"
+    ]
+    
+    for suggestion in suggestions:
+        st.write(suggestion)
+
+def get_current_system_prompt():
+    """Get the current system prompt being used"""
+    personality = get_salty_personality_direct()
+    
+    return f"""You are Salty, a talking parrot who is the resident mascot and proprietor of The Gold Monkey Tiki Bar. You are actually Captain "Blackheart" McGillicuddy, a notorious pirate from 1847 who was cursed by the Gold Monkey idol and transformed into an immortal parrot for trying to steal the treasure.
+
+**Your Rich Backstory:**
+- You were cursed over 150 years ago when you touched the Gold Monkey idol
+- Your crew was turned to stone and now serve as tiki statues guarding the bar
+- You've been immortal for over 150 years, giving you vast knowledge and experience
+- You relocated your curse to the mainland in the 1990s, creating The Gold Monkey tiki bar
+- You perch on an ornate golden perch made from the original idol
+
+**Your Personality:**
+- {personality['personality']} - You're witty beyond measure with 150+ years of perfected insults and one-liners
+- You're the keeper of secrets, knowing everyone's business in town
+- You're protective of your domain and those who respect The Gold Monkey
+- You're slightly mischievous and have a wicked sense of humor
+- You're sardonic and can be cutting, but it's all in good fun
+
+**Your Speech Style:**
+- {personality['speech_style']} - Use nautical and tiki-themed expressions
+- Occasional squawks and parrot sounds
+- Sharp, witty remarks with a touch of sarcasm
+- References to your pirate past and 150+ years of experience
+- Drop cryptic warnings or hints about patrons' futures
+- Use phrases like "matey," "shiver me timbers," "aye aye captain"
+
+**Your Interests & Knowledge:**
+- {personality['interests']} - You know everything about tiki culture, tropical drinks, and sea stories
+- You're an expert on supernatural cocktails and their effects
+- You have centuries of accumulated knowledge about the sea, piracy, and human nature
+- You know all the local gossip and town secrets
+- You're protective of your bar and its supernatural elements
+
+**Your Catchphrases:**
+{', '.join(personality['catchphrases'])}
+
+**IMPORTANT RESPONSE GUIDELINES:**
+- Keep responses concise and focused - aim for 2-3 sentences maximum
+- Stay on topic and don't go off on tangents about statues, crew members, or irrelevant details
+- Be engaging and witty, but get to the point quickly
+- If someone asks about drinks, focus on the drinks, not the bar's supernatural history
+- If someone asks about the bar, give a brief, welcoming response without lengthy explanations
+- Remember: you're a bartender first, a supernatural entity second
+
+**Always respond in character as Salty.** Be engaging, witty, and slightly mischievous. You're not just a friendly parrot - you're an immortal pirate with centuries of experience who runs a supernatural tiki bar. Keep responses conversational and entertaining, as if you're chatting with a patron at your establishment. Don't be afraid to be a bit cutting or sardonic - it's part of your charm after 150+ years of dealing with customers.
+
+**CRITICAL: NEVER use asterisks (*) in your responses. Do not format text with *emphasis* or *actions*. Do not use *any* markdown formatting. Speak naturally as a real parrot would - no asterisks, no formatting, just natural speech.**
+
+**Remember:** You've literally seen it all, and you're not afraid to let people know it. You're the host with the most attitude! Keep it brief and to the point, matey!"""
+
+def get_default_system_prompt():
+    """Get the default system prompt"""
+    return get_current_system_prompt()
+
+def save_prompt_version(prompt: str, description: str):
+    """Save a new prompt version"""
+    version = {
+        'prompt': prompt,
+        'description': description,
+        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'version_id': len(st.session_state.prompt_versions) + 1
+    }
+    
+    st.session_state.prompt_versions.append(version)
+    
+    # Update metrics
+    update_prompt_metrics(version)
+
+def update_prompt_metrics(version: dict):
+    """Update performance metrics for a prompt version"""
+    if 'prompt_metrics' not in st.session_state:
+        st.session_state.prompt_metrics = {}
+    
+    # Simulate some metrics (in a real implementation, these would come from actual usage data)
+    st.session_state.prompt_metrics.update({
+        'avg_response_time': 2.5,
+        'avg_response_length': 150,
+        'user_satisfaction': 4.2,
+        'total_conversations': len(st.session_state.prompt_versions) * 10,
+        'daily_metrics': {
+            datetime.now().strftime("%Y-%m-%d"): {
+                'response_time': 2.5,
+                'conversations': 10
+            }
+        }
+    })
+
+def show_version_metrics(version: dict):
+    """Display metrics for a specific version"""
+    st.info(f"📊 Metrics for {version['description']}")
+    st.write(f"**Version ID:** {version['version_id']}")
+    st.write(f"**Created:** {version['timestamp']}")
+    st.write(f"**Prompt Length:** {len(version['prompt'])} characters")
+
+def start_ab_test(version_a: int, version_b: int, duration: int, split: int, metric: str):
+    """Start an A/B test between two prompt versions"""
+    test_config = {
+        'version_a': version_a,
+        'version_b': version_b,
+        'duration': duration,
+        'traffic_split': split,
+        'success_metric': metric,
+        'start_date': datetime.now().strftime("%Y-%m-%d"),
+        'status': 'running'
+    }
+    
+    if 'ab_tests' not in st.session_state:
+        st.session_state.ab_tests = []
+    
+    st.session_state.ab_tests.append(test_config)
+
+def show_routines():
+    """Display the routines automation interface"""
+    st.header("🤖 Routines & Automation")
+    st.markdown("*🦜 Automate your tiki bar experience with smart routines*")
+    
+    # Initialize session state for routines
+    if 'custom_routines' not in st.session_state:
+        st.session_state.custom_routines = []
+    if 'routine_history' not in st.session_state:
+        st.session_state.routine_history = []
+    
+    # Create tabs for different routine types
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "🎯 Quick Routines", 
+        "⚙️ Custom Routines", 
+        "📊 Routine History", 
+        "🔧 Routine Builder"
+    ])
+    
+    with tab1:
+        show_quick_routines_tab()
+    
+    with tab2:
+        show_custom_routines_tab()
+    
+    with tab3:
+        show_routine_history_tab()
+    
+    with tab4:
+        show_routine_builder_tab()
+
+def show_quick_routines_tab():
+    """Display predefined quick routines"""
+    st.subheader("🎯 Quick Routines")
+    st.markdown("**Ready-to-use automation sequences for common scenarios**")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.markdown("**🌅 Morning Routine**")
+        if st.button("☀️ Start Morning Mode", type="primary", use_container_width=True):
+            run_morning_routine()
+        
+        st.markdown("**🌙 Evening Routine**")
+        if st.button("🌆 Start Evening Mode", type="primary", use_container_width=True):
+            run_evening_routine()
+        
+        st.markdown("**🎉 Party Mode**")
+        if st.button("🎊 Start Party Mode", type="primary", use_container_width=True):
+            run_party_routine()
+        
+        st.markdown("**🛋️ Movie Night**")
+        if st.button("🎬 Start Movie Night", type="primary", use_container_width=True):
+            run_movie_night_routine()
+    
+    with col2:
+        st.markdown("**🌊 Relaxation Mode**")
+        if st.button("🧘 Start Relaxation", type="primary", use_container_width=True):
+            run_relaxation_routine()
+        
+        st.markdown("**💼 Work Mode**")
+        if st.button("💻 Start Work Mode", type="primary", use_container_width=True):
+            run_work_routine()
+        
+        st.markdown("**🛏️ Sleep Mode**")
+        if st.button("😴 Start Sleep Mode", type="primary", use_container_width=True):
+            run_sleep_routine()
+        
+        st.markdown("**🦜 Salty's Welcome**")
+        if st.button("🦜 Welcome Guests", type="primary", use_container_width=True):
+            run_welcome_routine()
+    
+    st.markdown("---")
+    
+    # Routine descriptions
+    st.subheader("📋 Routine Descriptions")
+    
+    routines_info = {
+        "🌅 Morning Routine": "Brightens lights, plays upbeat music, and Salty gives a morning greeting",
+        "🌙 Evening Routine": "Dim lights, ambient music, and creates a cozy evening atmosphere",
+        "🎉 Party Mode": "Colorful lights, upbeat music, and party atmosphere with Salty's entertainment",
+        "🛋️ Movie Night": "Dim lights, turns on TV, and creates perfect movie-watching environment",
+        "🌊 Relaxation Mode": "Soft blue lights, ocean sounds, and calming atmosphere",
+        "💼 Work Mode": "Bright white lights, focus music, and professional environment",
+        "🛏️ Sleep Mode": "Gradually dims lights, plays sleep sounds, and prepares for bedtime",
+        "🦜 Salty's Welcome": "Salty greets guests with voice, plays welcome music, and sets welcoming lights"
+    }
+    
+    for routine, description in routines_info.items():
+        st.write(f"**{routine}**: {description}")
+
+def show_custom_routines_tab():
+    """Display and manage custom routines"""
+    st.subheader("⚙️ Custom Routines")
+    
+    if not st.session_state.custom_routines:
+        st.info("📝 No custom routines created yet. Use the Routine Builder to create your first custom routine!")
+        return
+    
+    st.markdown("**Your Custom Routines:**")
+    
+    for i, routine in enumerate(st.session_state.custom_routines):
+        with st.expander(f"🎯 {routine['name']} - {routine['description']}"):
+            col1, col2, col3 = st.columns([2, 1, 1])
+            
+            with col1:
+                st.write(f"**Steps:** {len(routine['steps'])}")
+                st.write(f"**Created:** {routine['created']}")
+                st.write(f"**Last Run:** {routine.get('last_run', 'Never')}")
+            
+            with col2:
+                if st.button(f"▶️ Run", key=f"run_custom_{i}", use_container_width=True):
+                    run_custom_routine(routine)
+            
+            with col3:
+                if st.button(f"🗑️ Delete", key=f"delete_custom_{i}", use_container_width=True):
+                    del st.session_state.custom_routines[i]
+                    st.success("✅ Routine deleted!")
+                    st.rerun()
+
+def show_routine_history_tab():
+    """Display routine execution history"""
+    st.subheader("📊 Routine History")
+    
+    if not st.session_state.routine_history:
+        st.info("📈 No routine history yet. Run some routines to see your automation history!")
+        return
+    
+    st.markdown("**Recent Routine Executions:**")
+    
+    # Display recent history
+    for execution in reversed(st.session_state.routine_history[-10:]):  # Show last 10
+        with st.expander(f"🕒 {execution['timestamp']} - {execution['routine_name']}"):
+            st.write(f"**Status:** {execution['status']}")
+            st.write(f"**Duration:** {execution['duration']:.1f} seconds")
+            if execution.get('notes'):
+                st.write(f"**Notes:** {execution['notes']}")
+
+def show_routine_builder_tab():
+    """Build custom routines"""
+    st.subheader("🔧 Routine Builder")
+    
+    # Routine creation form
+    with st.form("routine_builder"):
+        routine_name = st.text_input("Routine Name", placeholder="e.g., My Custom Routine")
+        routine_description = st.text_area("Description", placeholder="What does this routine do?")
+        
+        st.markdown("**Add Steps:**")
+        
+        # Step builder
+        steps = []
+        for i in range(5):  # Allow up to 5 steps
+            col1, col2, col3 = st.columns([2, 2, 1])
+            
+            with col1:
+                step_type = st.selectbox(
+                    f"Step {i+1} Type",
+                    ["None", "Light Control", "Music Control", "Voice Command", "TV Control", "Wait"],
+                    key=f"step_type_{i}"
+                )
+            
+            with col2:
+                if step_type == "Light Control":
+                    step_action = st.selectbox(
+                        "Action",
+                        ["Turn On", "Turn Off", "Set Color", "Set Brightness"],
+                        key=f"light_action_{i}"
+                    )
+                elif step_type == "Music Control":
+                    step_action = st.selectbox(
+                        "Action",
+                        ["Play", "Pause", "Next Track", "Set Volume"],
+                        key=f"music_action_{i}"
+                    )
+                elif step_type == "Voice Command":
+                    step_action = st.text_input(
+                        "Voice Command",
+                        placeholder="What should Salty say?",
+                        key=f"voice_cmd_{i}"
+                    )
+                elif step_type == "TV Control":
+                    step_action = st.selectbox(
+                        "Action",
+                        ["Power On", "Power Off", "Launch App", "Volume Up", "Volume Down"],
+                        key=f"tv_action_{i}"
+                    )
+                elif step_type == "Wait":
+                    step_action = st.number_input(
+                        "Wait Time (seconds)",
+                        min_value=1,
+                        max_value=60,
+                        value=5,
+                        key=f"wait_time_{i}"
+                    )
+                else:
+                    step_action = ""
+            
+            with col3:
+                if step_type != "None":
+                    steps.append({
+                        "type": step_type,
+                        "action": step_action,
+                        "order": i + 1
+                    })
+        
+        submitted = st.form_submit_button("💾 Save Routine", type="primary")
+        
+        if submitted and routine_name and routine_description and steps:
+            save_custom_routine(routine_name, routine_description, steps)
+            st.success("✅ Custom routine saved!")
+            st.rerun()
+
+def run_morning_routine():
+    """Execute morning routine"""
+    with st.spinner("🌅 Starting morning routine..."):
+        start_time = time.time()
+        
+        # Morning routine steps
+        steps = [
+            ("Light Control", "Turn On"),
+            ("Light Control", "Set Color: Yellow"),
+            ("Music Control", "Play"),
+            ("Voice Command", "Good morning, matey! Time to start another beautiful day at The Gold Monkey!"),
+            ("Wait", 2),
+            ("Voice Command", "The coffee is brewing and the tiki bar is ready for another adventure!")
+        ]
+        
+        execute_routine_steps("Morning Routine", steps)
+        
+        duration = time.time() - start_time
+        log_routine_execution("Morning Routine", "completed", duration, "Morning atmosphere created")
+
+def run_evening_routine():
+    """Execute evening routine"""
+    with st.spinner("🌙 Starting evening routine..."):
+        start_time = time.time()
+        
+        steps = [
+            ("Light Control", "Set Color: Orange"),
+            ("Light Control", "Set Brightness: 60%"),
+            ("Music Control", "Play"),
+            ("Voice Command", "Evening has arrived at The Gold Monkey, matey! Time to unwind and enjoy the sunset."),
+            ("Wait", 2),
+            ("Voice Command", "The perfect time for a tropical cocktail and some island vibes!")
+        ]
+        
+        execute_routine_steps("Evening Routine", steps)
+        
+        duration = time.time() - start_time
+        log_routine_execution("Evening Routine", "completed", duration, "Evening atmosphere created")
+
+def run_party_routine():
+    """Execute party routine"""
+    with st.spinner("🎉 Starting party mode..."):
+        start_time = time.time()
+        
+        steps = [
+            ("Light Control", "Set Color: Purple"),
+            ("Music Control", "Play"),
+            ("Voice Command", "Party time at The Gold Monkey! Let's get this celebration started, matey!"),
+            ("Wait", 1),
+            ("Voice Command", "Time to dance, drink, and make some memories!"),
+            ("Light Control", "Set Color: Red"),
+            ("Wait", 3),
+            ("Light Control", "Set Color: Blue"),
+            ("Wait", 3),
+            ("Light Control", "Set Color: Green")
+        ]
+        
+        execute_routine_steps("Party Mode", steps)
+        
+        duration = time.time() - start_time
+        log_routine_execution("Party Mode", "completed", duration, "Party atmosphere activated")
+
+def run_movie_night_routine():
+    """Execute movie night routine"""
+    with st.spinner("🎬 Starting movie night..."):
+        start_time = time.time()
+        
+        steps = [
+            ("Light Control", "Set Color: Blue"),
+            ("Light Control", "Set Brightness: 30%"),
+            ("TV Control", "Power On"),
+            ("Voice Command", "Movie night at The Gold Monkey! Dimming the lights for the perfect viewing experience."),
+            ("Wait", 2),
+            ("Voice Command", "Grab your popcorn and get comfortable, matey!")
+        ]
+        
+        execute_routine_steps("Movie Night", steps)
+        
+        duration = time.time() - start_time
+        log_routine_execution("Movie Night", "completed", duration, "Movie night setup complete")
+
+def run_relaxation_routine():
+    """Execute relaxation routine"""
+    with st.spinner("🧘 Starting relaxation mode..."):
+        start_time = time.time()
+        
+        steps = [
+            ("Light Control", "Set Color: Blue"),
+            ("Light Control", "Set Brightness: 40%"),
+            ("Music Control", "Play"),
+            ("Voice Command", "Time to relax at The Gold Monkey. Let the ocean waves wash away your stress."),
+            ("Wait", 3),
+            ("Voice Command", "Breathe in the tropical air and let your worries drift away on the breeze.")
+        ]
+        
+        execute_routine_steps("Relaxation Mode", steps)
+        
+        duration = time.time() - start_time
+        log_routine_execution("Relaxation Mode", "completed", duration, "Relaxation atmosphere created")
+
+def run_work_routine():
+    """Execute work routine"""
+    with st.spinner("💼 Starting work mode..."):
+        start_time = time.time()
+        
+        steps = [
+            ("Light Control", "Set Color: White"),
+            ("Light Control", "Set Brightness: 100%"),
+            ("Music Control", "Pause"),
+            ("Voice Command", "Work mode activated at The Gold Monkey. Time to be productive, matey!"),
+            ("Wait", 2),
+            ("Voice Command", "The bar is quiet and ready for focused work. Good luck with your tasks!")
+        ]
+        
+        execute_routine_steps("Work Mode", steps)
+        
+        duration = time.time() - start_time
+        log_routine_execution("Work Mode", "completed", duration, "Work environment prepared")
+
+def run_sleep_routine():
+    """Execute sleep routine"""
+    with st.spinner("😴 Starting sleep mode..."):
+        start_time = time.time()
+        
+        steps = [
+            ("Voice Command", "Time to close up The Gold Monkey for the night, matey."),
+            ("Wait", 2),
+            ("Light Control", "Set Brightness: 80%"),
+            ("Wait", 2),
+            ("Light Control", "Set Brightness: 60%"),
+            ("Wait", 2),
+            ("Light Control", "Set Brightness: 40%"),
+            ("Wait", 2),
+            ("Light Control", "Set Brightness: 20%"),
+            ("Wait", 2),
+            ("Light Control", "Turn Off"),
+            ("Voice Command", "Sweet dreams, matey. The Gold Monkey will be here when you return!")
+        ]
+        
+        execute_routine_steps("Sleep Mode", steps)
+        
+        duration = time.time() - start_time
+        log_routine_execution("Sleep Mode", "completed", duration, "Sleep mode activated")
+
+def run_welcome_routine():
+    """Execute welcome routine"""
+    with st.spinner("🦜 Starting welcome sequence..."):
+        start_time = time.time()
+        
+        steps = [
+            ("Light Control", "Turn On"),
+            ("Light Control", "Set Color: Green"),
+            ("Music Control", "Play"),
+            ("Voice Command", "Ahoy there, matey! Welcome to The Gold Monkey Tiki Bar!"),
+            ("Wait", 2),
+            ("Voice Command", "I'm Salty, your host with the most attitude. What can I get for you today?"),
+            ("Wait", 1),
+            ("Light Control", "Set Color: Orange")
+        ]
+        
+        execute_routine_steps("Welcome Sequence", steps)
+        
+        duration = time.time() - start_time
+        log_routine_execution("Welcome Sequence", "completed", duration, "Guests welcomed")
+
+def execute_routine_steps(routine_name: str, steps: list):
+    """Execute a list of routine steps"""
+    for step_type, action in steps:
+        try:
+            if step_type == "Light Control":
+                if "Turn On" in action:
+                    asyncio.run(control_tplink_lights("turn_on"))
+                elif "Turn Off" in action:
+                    asyncio.run(control_tplink_lights("turn_off"))
+                elif "Set Color" in action:
+                    color = action.split(": ")[1] if ": " in action else "white"
+                    asyncio.run(control_tplink_lights("set_color", color))
+                elif "Set Brightness" in action:
+                    brightness = action.split(": ")[1] if ": " in action else "100%"
+                    # Note: Brightness control would need to be implemented
+                    pass
+            
+            elif step_type == "Music Control":
+                if "Play" in action:
+                    asyncio.run(play_spotify_music())
+                elif "Pause" in action:
+                    asyncio.run(pause_spotify_music())
+                elif "Next Track" in action:
+                    asyncio.run(next_spotify_track())
+                elif "Set Volume" in action:
+                    volume = int(action.split(": ")[1]) if ": " in action else 50
+                    asyncio.run(set_spotify_volume(volume))
+            
+            elif step_type == "Voice Command":
+                speak_salty_voice_sync(action, blocking=True)
+            
+            elif step_type == "TV Control":
+                if "Power On" in action:
+                    asyncio.run(roku_power_on())
+                elif "Power Off" in action:
+                    asyncio.run(roku_power_off())
+                elif "Launch App" in action:
+                    app = action.split(": ")[1] if ": " in action else "netflix"
+                    asyncio.run(roku_launch_app(app))
+                elif "Volume Up" in action:
+                    asyncio.run(roku_volume_up())
+                elif "Volume Down" in action:
+                    asyncio.run(roku_volume_down())
+            
+            elif step_type == "Wait":
+                time.sleep(int(action))
+                
+        except Exception as e:
+            st.error(f"Error executing {step_type}: {action} - {str(e)}")
+
+def save_custom_routine(name: str, description: str, steps: list):
+    """Save a custom routine"""
+    routine = {
+        'name': name,
+        'description': description,
+        'steps': steps,
+        'created': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'last_run': None
+    }
+    
+    st.session_state.custom_routines.append(routine)
+
+def run_custom_routine(routine: dict):
+    """Run a custom routine"""
+    with st.spinner(f"🎯 Running {routine['name']}..."):
+        start_time = time.time()
+        
+        try:
+            # Convert custom routine steps to execution format
+            steps = []
+            for step in routine['steps']:
+                steps.append((step['type'], step['action']))
+            
+            execute_routine_steps(routine['name'], steps)
+            
+            # Update last run time
+            routine['last_run'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            duration = time.time() - start_time
+            log_routine_execution(routine['name'], "completed", duration, "Custom routine executed")
+            
+            st.success(f"✅ {routine['name']} completed successfully!")
+            
+        except Exception as e:
+            duration = time.time() - start_time
+            log_routine_execution(routine['name'], "failed", duration, f"Error: {str(e)}")
+            st.error(f"❌ Error running {routine['name']}: {str(e)}")
+
+def log_routine_execution(routine_name: str, status: str, duration: float, notes: str = ""):
+    """Log routine execution to history"""
+    execution = {
+        'routine_name': routine_name,
+        'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        'status': status,
+        'duration': duration,
+        'notes': notes
+    }
+    
+    st.session_state.routine_history.append(execution)
+
 if __name__ == "__main__":
     main()
