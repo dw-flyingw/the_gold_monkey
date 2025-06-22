@@ -1,7 +1,7 @@
 # MCP Server Testing Summary
 
 ## Overview
-Successfully tested and updated all 4 MCP servers for the Salty project to be compatible with MCP version 1.9.4.
+Successfully tested and updated all 5 MCP servers for the Salty project to be compatible with MCP version 1.9.4.
 
 ## Servers Tested
 
@@ -45,7 +45,29 @@ Successfully tested and updated all 4 MCP servers for the Salty project to be co
 - **Dependencies**: spotipy
 - **Notes**: Server is running and responding to requests
 
-### 4. SaltyBot Server (`mcp_servers/saltybot_server.py`)
+### 4. Roku Server (`mcp_servers/roku_server.py`)
+- **Status**: ✅ PASS
+- **Functionality**: Roku TV control via REST API
+- **Tools Available**:
+  - `power_on` - Power on the Roku device
+  - `power_off` - Power off the Roku device
+  - `home` - Go to Roku home screen
+  - `launch_app` - Launch an app by name
+  - `volume_up` - Increase volume
+  - `volume_down` - Decrease volume
+  - `mute` - Mute volume
+  - `info` - Show info banner
+  - `up` - Navigate up
+  - `down` - Navigate down
+  - `left` - Navigate left
+  - `right` - Navigate right
+  - `select` - Select current item
+  - `back` - Go back
+- **Dependencies**: requests
+- **Environment Variables**: `ROKU_HOST` (IP address of Roku device)
+- **Notes**: Server is running and responding to requests
+
+### 5. SaltyBot Server (`mcp_servers/saltybot_server.py`)
 - **Status**: ✅ PASS
 - **Functionality**: AI chatbot with Salty personality
 - **Tools Available**:
@@ -73,6 +95,11 @@ Successfully tested and updated all 4 MCP servers for the Salty project to be co
 - Simplified tool definitions and error handling
 - Improved logging and error reporting
 
+### 4. Added Roku Server
+- New Roku server for TV control via REST API
+- Full navigation and app control capabilities
+- Integrated with main Streamlit application
+
 ## Test Results
 
 ```
@@ -82,9 +109,10 @@ Successfully tested and updated all 4 MCP servers for the Salty project to be co
 TP-Link      ✅ PASS
 RAG          ✅ PASS
 Spotify      ✅ PASS
+Roku         ✅ PASS
 SaltyBot     ✅ PASS
 
-🎉 4/4 servers passed!
+🎉 5/5 servers passed!
 🎊 All servers are working correctly!
 ```
 
@@ -96,6 +124,7 @@ SaltyBot     ✅ PASS
 uv run mcp run mcp_servers/tplink_server.py
 uv run mcp run mcp_servers/rag_server.py
 uv run mcp run mcp_servers/spotify_server.py
+uv run mcp run mcp_servers/roku_server.py
 uv run mcp run mcp_servers/saltybot_server.py
 ```
 
@@ -111,6 +140,12 @@ python start_servers.py
 uv run python utils/test_mcp_servers.py
 ```
 
+### MCP Inspector
+```bash
+# Test individual servers with MCP inspector
+mcp dev mcp_servers/roku_server.py
+```
+
 ## Environment Requirements
 
 ### Required Environment Variables
@@ -118,6 +153,7 @@ uv run python utils/test_mcp_servers.py
 - `SPOTIFY_CLIENT_ID` - For Spotify integration
 - `SPOTIFY_CLIENT_SECRET` - For Spotify integration
 - `SPOTIFY_REDIRECT_URI` - For Spotify integration
+- `ROKU_HOST` - IP address of Roku device (e.g., "192.168.1.100")
 
 ### Required Dependencies
 - `mcp[cli]>=1.9.4` - MCP framework
@@ -126,6 +162,7 @@ uv run python utils/test_mcp_servers.py
 - `sentence-transformers>=2.5.0` - Text embeddings
 - `spotipy>=2.23.0` - Spotify API
 - `google-generativeai>=0.3.0` - Gemini AI
+- `requests>=2.31.0` - HTTP requests for Roku API
 
 ## Notes
 
@@ -133,6 +170,7 @@ uv run python utils/test_mcp_servers.py
 2. **Error Handling**: Improved error handling and logging across all servers
 3. **Performance**: FastMCP provides better performance than the low-level Server class
 4. **Maintainability**: Simplified code structure makes servers easier to maintain and extend
+5. **Roku Integration**: Full Roku TV control via REST API with comprehensive navigation tools
 
 ## Next Steps
 
@@ -140,7 +178,8 @@ uv run python utils/test_mcp_servers.py
 2. **Performance Monitoring**: Monitor server performance under load
 3. **Feature Expansion**: Add new tools and capabilities to each server
 4. **Documentation**: Create detailed API documentation for each server
+5. **Roku App Discovery**: Enhance app launching with better app discovery and management
 
 ---
 
-*Testing completed on 2025-06-19* 
+*Testing completed on 2025-01-19* 

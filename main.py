@@ -89,12 +89,12 @@ def get_salty_personality():
         ]
     }
 
-# TP-Link control functions - MCP client implementation
+# TP-Link control functions - Direct client implementation
 async def discover_tplink_devices():
     """Discover TP-Link devices on the network"""
     try:
-        from mcp_servers.tplink_client import discover_tplink_devices as mcp_discover
-        result = await mcp_discover()
+        from mcp_servers.tplink_direct import discover_tplink_devices as direct_discover
+        result = await direct_discover()
         return result
     except Exception as e:
         st.error(f"Error discovering TP-Link devices: {e}")
@@ -103,7 +103,7 @@ async def discover_tplink_devices():
 async def control_tplink_lights(action, color=None):
     """Control TP-Link lights"""
     try:
-        from mcp_servers.tplink_client import turn_on_tplink_lights, turn_off_tplink_lights, set_tplink_color
+        from mcp_servers.tplink_direct import turn_on_tplink_lights, turn_off_tplink_lights, set_tplink_color
         
         if action == "turn_on":
             result = await turn_on_tplink_lights()
@@ -382,6 +382,16 @@ async def roku_info():
     except Exception as e:
         st.error(f"Error showing Roku info: {e}")
         return {"error": str(e), "response": "Failed to show Roku info"}
+
+async def roku_get_device_status():
+    """Get comprehensive Roku device status"""
+    try:
+        from mcp_servers.roku_client import get_device_status as mcp_get_status
+        result = await mcp_get_status()
+        return result
+    except Exception as e:
+        st.error(f"Error getting Roku device status: {e}")
+        return {"error": str(e), "response": "Failed to get Roku device status"}
 
 # SaltyBot functions - Direct Gemini integration (no MCP dependency)
 def chat_with_salty_direct(message: str, conversation_history: list = None):
@@ -1021,6 +1031,16 @@ def show_spotify_control():
                 else:
                     st.success(result.get("response", "Tiki playlist started!"))
         
+        if st.button("🔍 Test Playlist Access", help="Debug playlist access issues"):
+            with st.spinner("🦜 Testing playlist access..."):
+                from mcp_servers.spotify_client import test_playlist_access
+                result = asyncio.run(test_playlist_access(tiki_playlist_id))
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success("Playlist test completed!")
+                    st.info(result.get("response", "No test results available"))
+        
         if st.button("🌃 Play Closing Song", help="Play New York, New York (closing song)"):
             with st.spinner("🦜 Playing the closing song..."):
                 result = asyncio.run(play_spotify_track(closing_song_id))
@@ -1229,12 +1249,59 @@ def show_roku_control():
         st.subheader("ℹ️ Info & Status")
         
         if st.button("ℹ️ Show Info"):
-            with st.spinner("🦜 Showing Roku info..."):
+            with st.spinner("🦜 Getting Roku device status..."):
                 result = asyncio.run(roku_info())
                 if "error" in result:
                     st.error(f"🦜 Squawk! Error: {result['error']}")
                 else:
-                    st.success(result.get("response", "Info displayed!"))
+                    # Display the status information in a formatted way
+                    status_text = result.get("response", "No status information available")
+                    
+                    # Create a nice formatted display
+                    st.success("🦜 Roku status retrieved successfully!")
+                    
+                    # Display the status in a code block for better formatting
+                    st.markdown("### 📺 Device Status")
+                    st.code(status_text, language="text")
+                    
+                    # Also display in a more readable format
+                    st.markdown("### 📊 Status Summary")
+                    
+                    # Parse the status text to extract key information
+                    lines = status_text.split('\n')
+                    device_name = "Unknown"
+                    current_app = "Unknown"
+                    ip_address = "Unknown"
+                    
+                    for line in lines:
+                        if "Name:" in line:
+                            device_name = line.split("Name:")[1].strip()
+                        elif "Current App:" in line:
+                            current_app = line.split("Current App:")[1].strip()
+                        elif "IP:" in line:
+                            ip_address = line.split("IP:")[1].strip()
+                    
+                    # Display key metrics
+                    col1, col2, col3 = st.columns(3)
+                    with col1:
+                        st.metric("Device Name", device_name)
+                    with col2:
+                        st.metric("Current App", current_app)
+                    with col3:
+                        st.metric("IP Address", ip_address)
+        
+        # Add a separate button for comprehensive status
+        if st.button("📊 Get Full Status"):
+            with st.spinner("🦜 Getting comprehensive Roku status..."):
+                result = asyncio.run(roku_get_device_status())
+                if "error" in result:
+                    st.error(f"🦜 Squawk! Error: {result['error']}")
+                else:
+                    st.success("🦜 Full status retrieved!")
+                    
+                    # Display in an expander for better organization
+                    with st.expander("📺 Complete Roku Status", expanded=True):
+                        st.markdown(result.get("response", "No status available"))
         
         st.markdown("---")
         
@@ -1246,6 +1313,7 @@ def show_roku_control():
         - ✅ **Select**: Choose what you want to watch
         - ↩️ **Back**: Go back to the previous screen
         - 🔊 **Volume**: Keep it at a good level for the tiki bar
+        - ℹ️ **Info**: Get detailed device status and information
         
         *Squawk! Good entertainment makes for happy customers!*
         """)
