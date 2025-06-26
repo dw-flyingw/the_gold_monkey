@@ -1,0 +1,48 @@
+{
+  "name": "Party Mode",
+  "description": "Colorful lights, upbeat music, and party atmosphere with Salty's entertainment",
+  "steps": [
+    {
+      "type": "Light Control",
+      "action": "Set Color: Purple"
+    },
+    {
+      "type": "Music Control",
+      "action": "Play"
+    },
+    {
+      "type": "Voice Command",
+      "action": "Party time at The Gold Monkey! Let's get this celebration started, matey!"
+    },
+    {
+      "type": "Wait",
+      "action": "1"
+    },
+    {
+      "type": "Voice Command",
+      "action": "Time to dance, drink, and make some memories!"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Color: Red"
+    },
+    {
+      "type": "Wait",
+      "action": "3"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Color: Blue"
+    },
+    {
+      "type": "Wait",
+      "action": "3"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Color: Green"
+    }
+  ],
+  "created": "2025-06-22 17:40:20",
+  "last_run": null
+}

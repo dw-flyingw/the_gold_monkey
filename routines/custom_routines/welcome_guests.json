@@ -1,0 +1,40 @@
+{
+  "name": "Welcome Guests",
+  "description": "Salty greets guests with voice, plays welcome music, and sets welcoming lights",
+  "steps": [
+    {
+      "type": "Light Control",
+      "action": "Turn On"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Color: Green"
+    },
+    {
+      "type": "Music Control",
+      "action": "Play"
+    },
+    {
+      "type": "Voice Command",
+      "action": "Ahoy there, matey! Welcome to The Gold Monkey Tiki Bar!"
+    },
+    {
+      "type": "Wait",
+      "action": "2"
+    },
+    {
+      "type": "Voice Command",
+      "action": "I'm Salty, your host with the most attitude. What can I get for you today?"
+    },
+    {
+      "type": "Wait",
+      "action": "1"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Color: Orange"
+    }
+  ],
+  "created": "2025-06-22 17:40:20",
+  "last_run": null
+}

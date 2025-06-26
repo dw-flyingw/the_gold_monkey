@@ -1,0 +1,32 @@
+{
+  "name": "Evening Routine",
+  "description": "Dim lights, ambient music, and creates a cozy evening atmosphere",
+  "steps": [
+    {
+      "type": "Light Control",
+      "action": "Set Color: Orange"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Brightness: 60%"
+    },
+    {
+      "type": "Music Control",
+      "action": "Play"
+    },
+    {
+      "type": "Voice Command",
+      "action": "Evening has arrived at The Gold Monkey, matey! Time to unwind and enjoy the sunset."
+    },
+    {
+      "type": "Wait",
+      "action": "2"
+    },
+    {
+      "type": "Voice Command",
+      "action": "The perfect time for a tropical cocktail and some island vibes!"
+    }
+  ],
+  "created": "2025-06-22 17:40:20",
+  "last_run": null
+}

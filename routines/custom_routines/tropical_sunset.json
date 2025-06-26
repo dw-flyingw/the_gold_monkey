@@ -1,0 +1,32 @@
+{
+  "name": "Tropical Sunset",
+  "description": "Create a beautiful tropical sunset atmosphere",
+  "steps": [
+    {
+      "type": "Light Control",
+      "action": "Set Color: Orange"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Brightness: 70%"
+    },
+    {
+      "type": "Music Control",
+      "action": "Play"
+    },
+    {
+      "type": "Voice Command",
+      "action": "Ahoy matey! The sun is setting over The Gold Monkey. Time to enjoy the golden hour with a tropical cocktail!"
+    },
+    {
+      "type": "Wait",
+      "action": 3
+    },
+    {
+      "type": "Voice Command",
+      "action": "The perfect time to relax and watch the colors dance across the sky. Cheers to another beautiful day!"
+    }
+  ],
+  "created": "2024-01-15 18:30:00",
+  "last_run": "2024-01-15 21:00:00"
+}

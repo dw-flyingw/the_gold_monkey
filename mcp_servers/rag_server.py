@@ -32,6 +32,11 @@ logger = logging.getLogger(__name__)
 # Initialize the server
 server = FastMCP("rag-server")
 
+def get_disable_telemetry():
+    val = os.getenv("CHROMA_DISABLE_TELEMETRY", "false")
+    val = val.strip('\'\"").lower()
+    return val == "true"
+
 @server.tool()
 async def query_documents(query: str, top_k: int = 5) -> str:
     """Search for relevant documents in the knowledge base"""
@@ -43,7 +48,7 @@ async def query_documents(query: str, top_k: int = 5) -> str:
         # Initialize ChromaDB client
         client = chromadb.PersistentClient(
             path="./data/chroma_db",
-            settings=Settings(anonymized_telemetry=False)
+            settings=Settings(anonymized_telemetry=get_disable_telemetry())
         )
         
         # Get collection
@@ -98,7 +103,7 @@ async def rebuild_database() -> str:
         # Initialize ChromaDB client
         client = chromadb.PersistentClient(
             path="./data/chroma_db",
-            settings=Settings(anonymized_telemetry=False)
+            settings=Settings(anonymized_telemetry=get_disable_telemetry())
         )
         
         # Get collection
@@ -170,7 +175,7 @@ async def list_documents() -> str:
         # Initialize ChromaDB client
         client = chromadb.PersistentClient(
             path="./data/chroma_db",
-            settings=Settings(anonymized_telemetry=False)
+            settings=Settings(anonymized_telemetry=get_disable_telemetry())
         )
         
         # Get collection
@@ -213,7 +218,7 @@ async def add_document(content: str, metadata: Dict[str, Any] = None) -> str:
         # Initialize ChromaDB client
         client = chromadb.PersistentClient(
             path="./data/chroma_db",
-            settings=Settings(anonymized_telemetry=False)
+            settings=Settings(anonymized_telemetry=get_disable_telemetry())
         )
         
         # Get collection
@@ -255,7 +260,7 @@ async def get_database_stats() -> str:
         # Initialize ChromaDB client
         client = chromadb.PersistentClient(
             path="./data/chroma_db",
-            settings=Settings(anonymized_telemetry=False)
+            settings=Settings(anonymized_telemetry=get_disable_telemetry())
         )
         
         # Get collection

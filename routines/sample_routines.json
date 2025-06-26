@@ -1,0 +1,114 @@
+[
+  {
+    "name": "Tropical Sunset",
+    "description": "Create a beautiful tropical sunset atmosphere",
+    "steps": [
+      {
+        "type": "Light Control",
+        "action": "Set Color: Orange"
+      },
+      {
+        "type": "Light Control",
+        "action": "Set Brightness: 70%"
+      },
+      {
+        "type": "Music Control",
+        "action": "Play"
+      },
+      {
+        "type": "Voice Command",
+        "action": "Ahoy matey! The sun is setting over The Gold Monkey. Time to enjoy the golden hour with a tropical cocktail!"
+      },
+      {
+        "type": "Wait",
+        "action": 3
+      },
+      {
+        "type": "Voice Command",
+        "action": "The perfect time to relax and watch the colors dance across the sky. Cheers to another beautiful day!"
+      }
+    ],
+    "created": "2024-01-15 18:30:00",
+    "last_run": null
+  },
+  {
+    "name": "Movie Night Setup",
+    "description": "Prepare the perfect movie night environment",
+    "steps": [
+      {
+        "type": "Light Control",
+        "action": "Set Color: Blue"
+      },
+      {
+        "type": "Light Control",
+        "action": "Set Brightness: 25%"
+      },
+      {
+        "type": "TV Control",
+        "action": "Power On"
+      },
+      {
+        "type": "Voice Command",
+        "action": "Movie night at The Gold Monkey! Dimming the lights for the perfect cinematic experience."
+      },
+      {
+        "type": "Wait",
+        "action": 2
+      },
+      {
+        "type": "Voice Command",
+        "action": "Grab your popcorn, settle in, and enjoy the show, matey!"
+      }
+    ],
+    "created": "2024-01-15 19:00:00",
+    "last_run": null
+  },
+  {
+    "name": "Party Mode",
+    "description": "Activate full party atmosphere with dynamic lighting",
+    "steps": [
+      {
+        "type": "Light Control",
+        "action": "Set Color: Purple"
+      },
+      {
+        "type": "Music Control",
+        "action": "Play"
+      },
+      {
+        "type": "Voice Command",
+        "action": "Party time at The Gold Monkey! Let's get this celebration started, matey!"
+      },
+      {
+        "type": "Wait",
+        "action": 2
+      },
+      {
+        "type": "Light Control",
+        "action": "Set Color: Red"
+      },
+      {
+        "type": "Wait",
+        "action": 2
+      },
+      {
+        "type": "Light Control",
+        "action": "Set Color: Blue"
+      },
+      {
+        "type": "Wait",
+        "action": 2
+      },
+      {
+        "type": "Light Control",
+        "action": "Set Color: Green"
+      },
+      {
+        "type": "Voice Command",
+        "action": "The party is in full swing! Dance, drink, and make some memories!"
+      }
+    ],
+    "created": "2024-01-15 20:00:00",
+    "last_run": null
+  }
+] 

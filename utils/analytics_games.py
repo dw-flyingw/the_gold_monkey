@@ -8,6 +8,8 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 from pathlib import Path
+from utils.mcp_analytics import get_mcp_analytics
+import time
 
 def show_analytics_dashboard():
     st.header("📊 Analytics Dashboard")
@@ -26,6 +28,20 @@ def show_analytics_dashboard():
             "daily_stats": {}
         }
     
+    # Create tabs for different analytics sections
+    tab1, tab2, tab3 = st.tabs(["📈 General Analytics", "🤖 MCP Server Analytics", "📊 Detailed Reports"])
+    
+    with tab1:
+        show_general_analytics()
+    
+    with tab2:
+        show_mcp_server_analytics()
+    
+    with tab3:
+        show_detailed_reports()
+
+def show_general_analytics():
+    """Show general analytics dashboard"""
     col1, col2 = st.columns(2)
     
     with col1:
@@ -129,9 +145,309 @@ def show_analytics_dashboard():
         
         for stat, value in music_stats.items():
             st.write(f"**{stat}:** {value}")
+
+def show_mcp_server_analytics():
+    """Show MCP server analytics dashboard"""
+    st.subheader("🤖 MCP Server Analytics")
+    st.markdown("*🦜 Real-time monitoring of all MCP servers*")
     
-    # Detailed analytics section
-    st.markdown("---")
+    # Add refresh controls
+    refresh_col1, refresh_col2, refresh_col3 = st.columns([1, 1, 2])
+    
+    with refresh_col1:
+        auto_refresh = st.checkbox("🔄 Auto-refresh", value=False, help="Automatically refresh data every 30 seconds")
+    
+    with refresh_col2:
+        if st.button("🔄 Manual Refresh"):
+            st.rerun()
+    
+    with refresh_col3:
+        st.write(f"**Last Updated:** {pd.Timestamp.now().strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    # Auto-refresh logic
+    if auto_refresh:
+        time.sleep(30)
+        st.rerun()
+    
+    try:
+        mcp_analytics = get_mcp_analytics()
+        summary = mcp_analytics.get_analytics_summary()
+        
+        # Server Status Overview with health indicators
+        st.markdown("### 🖥️ Server Status & Health")
+        
+        # Create a more detailed status display
+        status_data = []
+        for server, status in summary['server_status'].items():
+            # Determine health color and icon
+            if "🟢" in status:
+                health_icon = "🟢"
+                health_status = "Healthy"
+            elif "🟡" in status:
+                health_icon = "🟡"
+                health_status = "Idle"
+            else:
+                health_icon = "🔴"
+                health_status = "Offline"
+            
+            status_data.append({
+                'Server': server.capitalize(),
+                'Status': status,
+                'Health': health_status,
+                'Icon': health_icon
+            })
+        
+        # Display status in a more organized way
+        status_df = pd.DataFrame(status_data)
+        
+        # Create columns for status display
+        status_cols = st.columns(len(status_data))
+        for i, (_, row) in enumerate(status_df.iterrows()):
+            with status_cols[i]:
+                st.metric(
+                    row['Server'], 
+                    row['Status'],
+                    delta=row['Health']
+                )
+        
+        st.markdown("---")
+        
+        # Key Metrics with enhanced display
+        st.markdown("### 📊 Key Performance Indicators")
+        kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+        
+        with kpi1:
+            st.metric(
+                "Total Tool Calls", 
+                summary['total_tool_calls'],
+                delta="Last 24h"
+            )
+        
+        with kpi2:
+            st.metric(
+                "Total Errors", 
+                summary['total_errors'],
+                delta=f"{summary['total_errors']} today" if summary['total_errors'] > 0 else "0 today"
+            )
+        
+        with kpi3:
+            most_active = summary['most_active_server'] or "None"
+            st.metric(
+                "Most Active Server", 
+                most_active.capitalize() if most_active != "None" else "None"
+            )
+        
+        with kpi4:
+            most_used = summary['most_used_tool'] or "None"
+            st.metric(
+                "Most Used Tool", 
+                most_used
+            )
+        
+        st.markdown("---")
+        
+        # Recent Activity Chart with enhanced visualization
+        st.markdown("### 📈 Recent Activity (last 24h)")
+        if summary['recent_activity']:
+            activity_df = pd.DataFrame(list(summary['recent_activity'].items()), columns=["Server", "Activity (24h)"])
+            
+            # Add activity level indicators
+            activity_df['Activity Level'] = activity_df['Activity (24h)'].apply(
+                lambda x: "High" if x > 10 else "Medium" if x > 5 else "Low"
+            )
+            
+            # Display chart
+            st.bar_chart(activity_df.set_index("Server")['Activity (24h)'])
+            
+            # Show activity breakdown
+            st.markdown("**Activity Breakdown:**")
+            st.dataframe(activity_df, use_container_width=True)
+        else:
+            st.info("No recent activity data available")
+        
+        st.markdown("---")
+        
+        # Tool Usage Trends with enhanced analysis
+        st.markdown("### 🔧 Tool Usage Analysis")
+        tool_usage_df = mcp_analytics.get_tool_usage_data()
+        if not tool_usage_df.empty:
+            # Group by date and tool for trend analysis
+            tool_trend = tool_usage_df.groupby(['date', 'tool']).size().unstack(fill_value=0)
+            
+            # Display trend chart
+            st.line_chart(tool_trend)
+            
+            # Show tool usage breakdown with percentages
+            st.markdown("**Tool Usage Breakdown:**")
+            tool_counts = tool_usage_df['tool'].value_counts()
+            total_tools = tool_counts.sum()
+            
+            tool_breakdown = []
+            for tool, count in tool_counts.items():
+                percentage = (count / total_tools * 100) if total_tools > 0 else 0
+                tool_breakdown.append({
+                    'Tool': tool,
+                    'Usage Count': count,
+                    'Percentage': f"{percentage:.1f}%"
+                })
+            
+            tool_breakdown_df = pd.DataFrame(tool_breakdown)
+            st.dataframe(tool_breakdown_df, use_container_width=True)
+            
+            # Show usage by server
+            st.markdown("**Usage by Server:**")
+            server_tool_counts = tool_usage_df.groupby('server')['tool'].count().sort_values(ascending=False)
+            server_tool_df = pd.DataFrame(server_tool_counts).reset_index()
+            server_tool_df.columns = ['Server', 'Tool Calls']
+            st.dataframe(server_tool_df, use_container_width=True)
+        else:
+            st.info("No tool usage data available")
+        
+        st.markdown("---")
+        
+        # Error Trends with enhanced analysis
+        st.markdown("### ⚠️ Error Analysis & Trends")
+        error_df = mcp_analytics.get_error_trends()
+        if not error_df.empty:
+            # Error trends by date and server
+            error_trend = error_df.groupby(['date', 'server']).size().unstack(fill_value=0)
+            st.line_chart(error_trend)
+            
+            # Error severity analysis
+            st.markdown("**Error Severity Analysis:**")
+            error_severity = error_df.groupby(['server', 'level']).size().unstack(fill_value=0)
+            st.dataframe(error_severity, use_container_width=True)
+            
+            # Show recent errors with better formatting
+            st.markdown("**🔍 Recent Errors:**")
+            recent_errors = error_df.sort_values('timestamp', ascending=False).head(10)
+            
+            # Format the display
+            for _, error in recent_errors.iterrows():
+                severity_icon = "🔴" if error['level'] == 'ERROR' else "🟡"
+                st.write(f"{severity_icon} **{error['server'].capitalize()}** - {error['timestamp'].strftime('%Y-%m-%d %H:%M')}")
+                st.write(f"   {error['message']}")
+                st.write("---")
+        else:
+            st.info("No error data available")
+        
+        st.markdown("---")
+        
+        # Server Performance Details with enhanced metrics
+        st.markdown("### ⚡ Server Performance Metrics")
+        performance_data = mcp_analytics.get_server_performance_data()
+        if performance_data:
+            # Create enhanced performance metrics
+            perf_metrics = []
+            for server, perf in performance_data.items():
+                # Calculate additional metrics
+                uptime_hours = 0
+                if perf.get('first_entry') and perf.get('last_entry'):
+                    uptime_hours = (perf['last_entry'] - perf['first_entry']).total_seconds() / 3600
+                
+                perf_metrics.append({
+                    'Server': server.capitalize(),
+                    'Total Entries': perf.get('total_entries', 0),
+                    'Error Count': perf.get('error_count', 0),
+                    'Error Rate (%)': f"{perf.get('error_rate', 0):.1f}",
+                    'Entries/Hour': f"{perf.get('entries_per_hour', 0):.1f}",
+                    'Uptime (hrs)': f"{uptime_hours:.1f}",
+                    'Health Score': f"{max(0, 100 - perf.get('error_rate', 0)):.0f}%"
+                })
+            
+            perf_df = pd.DataFrame(perf_metrics)
+            st.dataframe(perf_df, use_container_width=True)
+            
+            # Performance visualization
+            if len(perf_metrics) > 1:
+                st.markdown("**Performance Comparison:**")
+                
+                # Error rate comparison
+                perf_viz_df = pd.DataFrame(perf_metrics)
+                perf_viz_df['Error Rate (%)'] = perf_viz_df['Error Rate (%)'].astype(float)
+                st.bar_chart(perf_viz_df.set_index('Server')['Error Rate (%)'])
+                
+                # Health score comparison
+                perf_viz_df['Health Score'] = perf_viz_df['Health Score'].str.rstrip('%').astype(float)
+                st.bar_chart(perf_viz_df.set_index('Server')['Health Score'])
+        else:
+            st.info("No performance data available")
+        
+        st.markdown("---")
+        
+        # Server Details Section with enhanced information
+        st.markdown("### 🔍 Detailed Server Information")
+        
+        if performance_data:
+            # Create expandable sections for each server
+            for server_name, perf_data in performance_data.items():
+                with st.expander(f"📋 {server_name.capitalize()} Server Details"):
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.write(f"**Total Entries:** {perf_data.get('total_entries', 0)}")
+                        st.write(f"**Error Count:** {perf_data.get('error_count', 0)}")
+                        st.write(f"**Warning Count:** {perf_data.get('warning_count', 0)}")
+                        st.write(f"**Error Rate:** {perf_data.get('error_rate', 0):.1f}%")
+                        st.write(f"**Health Score:** {max(0, 100 - perf_data.get('error_rate', 0)):.0f}%")
+                    
+                    with col2:
+                        st.write(f"**Entries/Hour:** {perf_data.get('entries_per_hour', 0):.1f}")
+                        if perf_data.get('first_entry'):
+                            st.write(f"**First Entry:** {perf_data['first_entry'].strftime('%Y-%m-%d %H:%M')}")
+                        if perf_data.get('last_entry'):
+                            st.write(f"**Last Entry:** {perf_data['last_entry'].strftime('%Y-%m-%d %H:%M')}")
+                        
+                        # Calculate uptime
+                        if perf_data.get('first_entry') and perf_data.get('last_entry'):
+                            uptime = perf_data['last_entry'] - perf_data['first_entry']
+                            st.write(f"**Uptime:** {uptime}")
+                    
+                    # Daily stats if available
+                    if perf_data.get('daily_stats'):
+                        st.markdown("**📅 Daily Statistics:**")
+                        daily_df = pd.DataFrame(perf_data['daily_stats']).T
+                        st.dataframe(daily_df, use_container_width=True)
+                        
+                        # Daily trends chart
+                        if len(daily_df) > 1:
+                            st.markdown("**📈 Daily Trends:**")
+                            st.line_chart(daily_df['total_entries'])
+        
+        st.markdown("---")
+        
+        # System Recommendations
+        st.markdown("### 💡 System Recommendations")
+        
+        recommendations = []
+        
+        # Analyze errors and provide recommendations
+        if summary['total_errors'] > 0:
+            recommendations.append("🔧 **Error Management**: Consider implementing better error handling for the Spotify server")
+        
+        # Check for idle servers
+        idle_servers = [server for server, status in summary['server_status'].items() if "🟡" in status]
+        if idle_servers:
+            recommendations.append(f"⚡ **Server Optimization**: {', '.join(idle_servers)} servers are idle - consider resource optimization")
+        
+        # Check for offline servers
+        offline_servers = [server for server, status in summary['server_status'].items() if "🔴" in status]
+        if offline_servers:
+            recommendations.append(f"🔄 **Server Recovery**: {', '.join(offline_servers)} servers are offline - check connectivity and restart if needed")
+        
+        if not recommendations:
+            recommendations.append("✅ **System Health**: All systems are operating normally")
+        
+        for rec in recommendations:
+            st.write(rec)
+        
+    except Exception as e:
+        st.error(f"Error loading MCP analytics: {e}")
+        st.info("MCP analytics will be available when MCP servers are running and generating logs.")
+        st.code(f"Error details: {str(e)}")
+
+def show_detailed_reports():
+    """Show detailed reports section"""
     st.subheader("📋 Detailed Reports")
     
     report_col1, report_col2 = st.columns(2)
@@ -166,7 +482,7 @@ def show_analytics_dashboard():
         
         # Energy consumption (simulated)
         energy_data = pd.DataFrame({
-            'Device': ['Smart Lights', 'Audio System', 'Roku', 'Voice System'],
+            'Device': ['TPLink Control', 'Audio System', 'Roku', 'Voice System'],
             'Power (W)': [45, 120, 15, 25],
             'Daily Usage (hrs)': [8, 6, 4, 2]
         })

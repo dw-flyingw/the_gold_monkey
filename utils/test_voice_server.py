@@ -21,9 +21,10 @@ async def test_voice_server():
         # Create voice server
         voice_server = VoiceServer()
         print(f"TTS Method: {voice_server.tts_method}")
+        tts_method = voice_server.tts_method.strip('"').strip("'")
         
         # Test generate_salty_voice
-        if voice_server.tts_method == 'gtts':
+        if tts_method == 'gtts':
             print("Testing generate_salty_voice with gTTS...")
             try:
                 result = await voice_server.generate_salty_voice("Hello, this is a test of the voice server")
@@ -49,7 +50,7 @@ async def test_voice_server():
                 import traceback
                 traceback.print_exc()
         else:
-            print(f"TTS method is {voice_server.tts_method}, not testing gTTS")
+            print(f"TTS method is {tts_method}, not testing gTTS")
         
     except Exception as e:
         print(f"Error in voice server test: {e}")

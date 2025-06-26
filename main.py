@@ -23,11 +23,6 @@ from dotenv import load_dotenv
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'src'))
 # Load environment variables
 load_dotenv()
-# Import environment utilities
-from utils.env_utils import (
-    get_tts_method, get_voice_server_url, get_elevenlabs_config
-    
-)
 # Set up logging
 LOGS_DIR = Path(__file__).parent / "logs"
 LOGS_DIR.mkdir(exist_ok=True)
@@ -1591,7 +1586,7 @@ def show_voice_control():
         
         # Show current voice settings
         st.write("**Current Voice Settings:**")
-        tts_method = get_tts_method()
+        tts_method = os.getenv('TTS_METHOD')
         st.code(f"""
 TTS_METHOD: {tts_method}
 ELEVENLABS_API_KEY: {'✅ Set' if os.getenv('ELEVENLABS_API_KEY') else '❌ Not set'}

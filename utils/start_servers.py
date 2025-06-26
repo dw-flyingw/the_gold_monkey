@@ -9,19 +9,22 @@ import time
 import signal
 import os
 from pathlib import Path
+from dotenv import load_dotenv
+load_dotenv()
 
 def start_server(server_name, script_path, server_type="mcp"):
     """Start a single server"""
     try:
         print(f"Starting {server_name} server...")
+        env = os.environ.copy()
         if server_type == "mcp":
             process = subprocess.Popen([
                 "uv", "run", "mcp", "run", script_path
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
         else:  # standalone
             process = subprocess.Popen([
                 "python3", script_path
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=env)
         return process
     except Exception as e:
         print(f"Error starting {server_name}: {e}")

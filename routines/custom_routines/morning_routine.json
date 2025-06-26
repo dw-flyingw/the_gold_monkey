@@ -1,0 +1,32 @@
+{
+  "name": "Morning Routine",
+  "description": "Brightens lights, plays upbeat music, and Salty gives a morning greeting",
+  "steps": [
+    {
+      "type": "Light Control",
+      "action": "Turn On"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Color: Yellow"
+    },
+    {
+      "type": "Music Control",
+      "action": "Play"
+    },
+    {
+      "type": "Voice Command",
+      "action": "Good morning, matey! Time to start another beautiful day at The Gold Monkey!"
+    },
+    {
+      "type": "Wait",
+      "action": "2"
+    },
+    {
+      "type": "Voice Command",
+      "action": "The coffee is brewing and the tiki bar is ready for another adventure!"
+    }
+  ],
+  "created": "2025-06-22 17:40:20",
+  "last_run": "2025-06-22 17:45:31"
+}

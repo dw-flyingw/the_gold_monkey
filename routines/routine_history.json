@@ -1,0 +1,65 @@
+[
+  {
+    "routine_name": "Tropical Sunset",
+    "timestamp": "2024-01-15 21:00:00",
+    "status": "completed",
+    "duration": 4.5,
+    "notes": "Test execution from integration test"
+  },
+  {
+    "routine_name": "Tropical Sunset",
+    "timestamp": "2024-01-15 21:00:00",
+    "status": "completed",
+    "duration": 4.5,
+    "notes": "Test execution from integration test"
+  },
+  {
+    "routine_name": "Tropical Sunset",
+    "timestamp": "2024-01-15 21:00:00",
+    "status": "completed",
+    "duration": 4.5,
+    "notes": "Test execution from integration test"
+  },
+  {
+    "routine_name": "Tropical Sunset",
+    "timestamp": "2024-01-15 21:00:00",
+    "status": "completed",
+    "duration": 4.5,
+    "notes": "Test execution from integration test"
+  },
+  {
+    "routine_name": "Tropical Sunset",
+    "timestamp": "2024-01-15 21:00:00",
+    "status": "completed",
+    "duration": 4.5,
+    "notes": "Test execution from integration test"
+  },
+  {
+    "routine_name": "Morning Routine",
+    "timestamp": "2025-06-22 17:45:31",
+    "status": "completed",
+    "duration": 26.087143898010254,
+    "notes": "Custom routine executed"
+  },
+  {
+    "routine_name": "Bright White Shelves and Roof",
+    "timestamp": "2025-06-22 20:15:55",
+    "status": "failed",
+    "duration": 2.1457672119140625e-06,
+    "notes": "Error: 'type'"
+  },
+  {
+    "routine_name": "Bright White Shelves and Roof",
+    "timestamp": "2025-06-22 20:17:39",
+    "status": "completed",
+    "duration": 10.781774759292603,
+    "notes": "Custom routine executed"
+  },
+  {
+    "routine_name": "Bright White Shelves and Roof",
+    "timestamp": "2025-06-22 20:27:08",
+    "status": "completed",
+    "duration": 5.445907115936279,
+    "notes": "Custom routine executed"
+  }
+]

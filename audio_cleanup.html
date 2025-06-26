@@ -1,0 +1,60 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Audio Cleanup</title>
+</head>
+<body>
+    <h1>Audio Context Cleanup</h1>
+    <p>This page will clean up any lingering audio contexts.</p>
+    <button onclick="cleanupAudio()">Clean Up Audio</button>
+    <div id="status"></div>
+    
+    <script>
+        function cleanupAudio() {
+            const status = document.getElementById('status');
+            status.innerHTML = 'Cleaning up audio contexts...';
+            
+            // Close any existing audio contexts
+            if (window.audioCtx) {
+                try {
+                    window.audioCtx.close();
+                    console.log('Closed existing audio context');
+                } catch (e) {
+                    console.log('Audio context already closed');
+                }
+            }
+            
+            // Stop any oscillators
+            if (window.oscillator) {
+                try {
+                    window.oscillator.stop();
+                    window.oscillator.disconnect();
+                    console.log('Stopped oscillator');
+                } catch (e) {
+                    console.log('Oscillator already stopped');
+                }
+            }
+            
+            // Clear any intervals
+            for (let i = 1; i < 1000; i++) {
+                window.clearInterval(i);
+                window.clearTimeout(i);
+            }
+            
+            status.innerHTML = 'Audio cleanup complete! You can close this tab now.';
+            status.style.color = 'green';
+        }
+        
+        // Auto-cleanup on page load
+        window.addEventListener('load', function() {
+            setTimeout(cleanupAudio, 1000);
+        });
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            cleanupAudio();
+        });
+    </script>
+</body>
+</html>

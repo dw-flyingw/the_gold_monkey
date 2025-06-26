@@ -92,6 +92,16 @@ async def get_tplink_status() -> Dict[str, Any]:
     client = TPLinkMCPClient()
     return await client.get_light_status()
 
+async def refresh_device_cache(force: bool = False) -> Dict[str, Any]:
+    """Refresh the device cache"""
+    client = TPLinkMCPClient()
+    return await client._call_tool("refresh_device_cache", {"force": force})
+
+async def get_cache_status() -> Dict[str, Any]:
+    """Get the current cache status"""
+    client = TPLinkMCPClient()
+    return await client._call_tool("get_cache_status")
+
 if __name__ == "__main__":
     # Test the client
     async def test():

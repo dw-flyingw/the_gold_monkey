@@ -1,0 +1,15 @@
+{
+  "name": "Bright White Shelves and Roof",
+  "description": "Turns the roof lights and the shelves to bright white.",
+  "steps": [
+    {
+      "type": "Light Control",
+      "action": "Set Color: White"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Color: White"
+    }
+  ],
+  "last_run": "2025-06-22 20:27:08"
+}

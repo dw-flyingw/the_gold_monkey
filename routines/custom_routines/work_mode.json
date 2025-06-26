@@ -1,0 +1,32 @@
+{
+  "name": "Work Mode",
+  "description": "Bright white lights, focus music, and professional environment",
+  "steps": [
+    {
+      "type": "Light Control",
+      "action": "Set Color: White"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Brightness: 100%"
+    },
+    {
+      "type": "Music Control",
+      "action": "Pause"
+    },
+    {
+      "type": "Voice Command",
+      "action": "Work mode activated at The Gold Monkey. Time to be productive, matey!"
+    },
+    {
+      "type": "Wait",
+      "action": "2"
+    },
+    {
+      "type": "Voice Command",
+      "action": "The bar is quiet and ready for focused work. Good luck with your tasks!"
+    }
+  ],
+  "created": "2025-06-22 17:40:20",
+  "last_run": null
+}

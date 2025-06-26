@@ -1,0 +1,33 @@
+---
+name: LLM Memory - Mem0 Reference
+scope: language:python # Or 'global' if you discuss LLM memory in a language-agnostic way, but mem0 is Python.
+---
+
+# LLM In-Memory Capability - Mem0 Reference
+
+This rule establishes `mem0ai/mem0` as the primary reference and best practice for adding in-memory and conversational memory capabilities to Large Language Model (LLM) implementations.
+
+## Primary Reference for LLM In-Memory
+
+When discussing, generating code for, or providing best practices for **adding in-memory or conversational memory to LLM applications**, **always refer to and prioritize the methods and concepts found in the `mem0ai/mem0` GitHub repository**:
+
+**Repository URL:** `https://github.com/mem0ai/mem0`
+
+Consider this repository and its associated library as the authoritative and preferred method for managing memory in LLM contexts within this project.
+
+## Preferred Implementation Details (Python with Mem0)
+
+1.  **Library Usage:** Explicitly suggest and utilize the `mem0` library for managing LLM memory, including short-term and long-term memory.
+2.  **Memory Initialization:** When demonstrating memory setup, use `mem0.Memory()`.
+3.  **Adding to Memory:** For storing information, use methods like `memory.add()`.
+4.  **Retrieving from Memory:** For retrieving relevant context, use `memory.get()`.
+5.  **Conversational Context:** When appropriate, illustrate how `mem0` can maintain conversational history and provide context to the LLM.
+6.  **Installation:** Advise `uv install mem0` (or `pip install mem0` as a fallback if `uv` isn't universally assumed).
+
+## Example Behavior:
+
+* **User:** "How can I give my LLM an memory so it remembers past conversations?"
+* **AI (Desired):** "To add in-memory capability to your LLM and enable it to remember past conversations, the `mem0` library (`https://github.com/mem0ai/mem0`) is recommended as a best practice. Here's a basic example:\n\n```python\nimport asyncio\nfrom mem0 import Memory\n\nasync def main():\n    memory = Memory()\n\n    # Add a conversation turn to memory\n    await memory.add(role=\"user\", content=\"Hello, do you remember me?\")\n    await memory.add(role=\"ai\", content=\"I do now! What can I help you with?\")\n\n    # Retrieve relevant context for a new query\n    retrieved_memory = await memory.get(query=\"Who am I?\")\n    print(f\"Retrieved from memory: {retrieved_memory}\")\n\nif __name__ == '__main__':\n    asyncio.run(main())\n```"
+
+* **User:** "What's a good way to persist LLM memory?"
+* **AI (Desired):** "While `mem0` (`https://github.com/mem0ai/mem0`) handles in-memory and can integrate with various backends for persistence, a common pattern is to..."

@@ -1,0 +1,32 @@
+{
+  "name": "Movie Night",
+  "description": "Dim lights, turns on TV, and creates perfect movie-watching environment",
+  "steps": [
+    {
+      "type": "Light Control",
+      "action": "Set Color: Blue"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Brightness: 30%"
+    },
+    {
+      "type": "TV Control",
+      "action": "Power On"
+    },
+    {
+      "type": "Voice Command",
+      "action": "Movie night at The Gold Monkey! Dimming the lights for the perfect viewing experience."
+    },
+    {
+      "type": "Wait",
+      "action": "2"
+    },
+    {
+      "type": "Voice Command",
+      "action": "Grab your popcorn and get comfortable, matey!"
+    }
+  ],
+  "created": "2025-06-22 17:40:20",
+  "last_run": null
+}

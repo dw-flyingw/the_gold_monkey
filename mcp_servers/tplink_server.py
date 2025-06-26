@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """
 TP-Link MCP Server for Salty
-Provides smart lighting control via MCP protocol
+Provides smart lighting control via MCP protocol with device caching
 """
 
 import asyncio
 import logging
-from typing import Any, Sequence
+import time
+from typing import Any, Sequence, Dict, List
 from mcp.server.fastmcp import FastMCP
 from mcp.server.models import InitializationOptions
 from mcp.server.stdio import stdio_server
@@ -26,6 +27,54 @@ from mcp.types import (
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Device cache
+_device_cache = {}
+_cache_timestamp = 0
+_cache_duration = 30  # Cache devices for 30 seconds
+
+def _rgb_to_hsv(r, g, b):
+    """Convert RGB to HSV."""
+    r, g, b = r/255.0, g/255.0, b/255.0
+    cmax = max(r, g, b)
+    cmin = min(r, g, b)
+    diff = cmax - cmin
+    
+    if cmax == cmin:
+        h = 0
+    elif cmax == r:
+        h = (60 * ((g-b)/diff) + 360) % 360
+    elif cmax == g:
+        h = (60 * ((b-r)/diff) + 120) % 360
+    else:
+        h = (60 * ((r-g)/diff) + 240) % 360
+    
+    s = 0 if cmax == 0 else (diff / cmax) * 100
+    v = cmax * 100
+    
+    return int(h), int(s), int(v)
+
+async def _get_cached_devices(force_refresh: bool = False) -> List:
+    """Get devices from cache or discover them if cache is stale"""
+    global _device_cache, _cache_timestamp
+    
+    current_time = time.time()
+    
+    # Check if cache is valid
+    if (not force_refresh and 
+        _device_cache and 
+        current_time - _cache_timestamp < _cache_duration):
+        logger.info("Using cached devices")
+        return list(_device_cache.values())
+    
+    # Discover devices
+    logger.info("Discovering devices (cache miss or forced refresh)")
+    import kasa
+    devices = await kasa.Discover.discover()
+    _device_cache = devices
+    _cache_timestamp = current_time
+    
+    return list(devices.values())
+
 # Initialize the server
 server = FastMCP("tplink-server")
 
@@ -33,11 +82,8 @@ server = FastMCP("tplink-server")
 async def discover_tplink_devices() -> str:
     """Discover TP-Link smart devices on the network"""
     try:
-        import kasa
-        
-        # Discover devices
-        devices = await kasa.Discover.discover()
-        device_list = list(devices.values())
+        # Get devices (will use cache if available)
+        device_list = await _get_cached_devices()
         
         if not device_list:
             return "No TP-Link devices found on the network"
@@ -84,11 +130,8 @@ async def discover_tplink_devices() -> str:
 async def turn_on_lights() -> str:
     """Turn on all TP-Link smart lights"""
     try:
-        import kasa
-        
-        # Discover devices
-        devices = await kasa.Discover.discover()
-        device_list = list(devices.values())
+        # Get devices from cache
+        device_list = await _get_cached_devices()
         
         if not device_list:
             return "No TP-Link devices found on the network"
@@ -113,11 +156,8 @@ async def turn_on_lights() -> str:
 async def turn_off_lights() -> str:
     """Turn off all TP-Link smart lights"""
     try:
-        import kasa
-        
-        # Discover devices
-        devices = await kasa.Discover.discover()
-        device_list = list(devices.values())
+        # Get devices from cache
+        device_list = await _get_cached_devices()
         
         if not device_list:
             return "No TP-Link devices found on the network"
@@ -142,8 +182,6 @@ async def turn_off_lights() -> str:
 async def set_light_color(color: str) -> str:
     """Set color for all TP-Link smart lights"""
     try:
-        import kasa
-        
         # Color mapping
         color_map = {
             "red": (255, 0, 0),
@@ -168,9 +206,8 @@ async def set_light_color(color: str) -> str:
         else:
             rgb = color_map.get(color.lower(), (255, 255, 255))
         
-        # Discover devices
-        devices = await kasa.Discover.discover()
-        device_list = list(devices.values())
+        # Get devices from cache
+        device_list = await _get_cached_devices()
         
         if not device_list:
             return "No TP-Link devices found on the network"
@@ -201,11 +238,8 @@ async def set_light_color(color: str) -> str:
 async def get_light_status() -> str:
     """Get status of all TP-Link smart lights"""
     try:
-        import kasa
-        
-        # Discover devices
-        devices = await kasa.Discover.discover()
-        device_list = list(devices.values())
+        # Get devices from cache
+        device_list = await _get_cached_devices()
         
         if not device_list:
             return "No TP-Link devices found on the network"
@@ -219,8 +253,7 @@ async def get_light_status() -> str:
                     "alias": device.alias,
                     "ip": device.host,
                     "is_on": device.is_on if hasattr(device, 'is_on') else None,
-                    "brightness": device.brightness if hasattr(device, 'brightness') else None,
-                    "color_temp": device.color_temp if hasattr(device, 'color_temp') else None
+                    "brightness": device.brightness if hasattr(device, 'brightness') else None
                 }
                 status_info.append(status)
             except Exception as e:
@@ -233,13 +266,11 @@ async def get_light_status() -> str:
         
         result_text = f"Status of {len(device_list)} TP-Link device(s):\n\n"
         for status in status_info:
-            result_text += f"• {status['alias']} ({status['ip']})\n"
+            result_text += f"• {status['alias']} at {status['ip']}\n"
             if 'is_on' in status and status['is_on'] is not None:
                 result_text += f"  Status: {'🟢 On' if status['is_on'] else '⚫ Off'}\n"
             if 'brightness' in status and status['brightness'] is not None:
                 result_text += f"  Brightness: {status['brightness']}%\n"
-            if 'color_temp' in status and status['color_temp'] is not None:
-                result_text += f"  Color Temp: {status['color_temp']}K\n"
             if 'error' in status:
                 result_text += f"  Error: {status['error']}\n"
             result_text += "\n"
@@ -250,26 +281,34 @@ async def get_light_status() -> str:
         logger.error(f"Error getting light status: {e}")
         return f"Error getting light status: {str(e)}"
 
-def _rgb_to_hsv(r, g, b):
-    """Convert RGB to HSV."""
-    r, g, b = r/255.0, g/255.0, b/255.0
-    cmax = max(r, g, b)
-    cmin = min(r, g, b)
-    diff = cmax - cmin
+@server.tool()
+async def refresh_device_cache(force: bool = False) -> str:
+    """Refresh the device cache"""
+    try:
+        await _get_cached_devices(force_refresh=True)
+        return f"✅ Device cache refreshed successfully"
+    except Exception as e:
+        logger.error(f"Error refreshing device cache: {e}")
+        return f"Error refreshing device cache: {str(e)}"
+
+@server.tool()
+async def get_cache_status() -> str:
+    """Get the current cache status"""
+    global _cache_timestamp, _cache_duration
     
-    if cmax == cmin:
-        h = 0
-    elif cmax == r:
-        h = (60 * ((g-b)/diff) + 360) % 360
-    elif cmax == g:
-        h = (60 * ((b-r)/diff) + 120) % 360
-    else:
-        h = (60 * ((r-g)/diff) + 240) % 360
+    current_time = time.time()
+    cache_age = current_time - _cache_timestamp
+    cache_valid = cache_age < _cache_duration
     
-    s = 0 if cmax == 0 else (diff / cmax) * 100
-    v = cmax * 100
+    status = {
+        "cached_devices": len(_device_cache),
+        "cache_age_seconds": round(cache_age, 1),
+        "cache_duration_seconds": _cache_duration,
+        "cache_valid": cache_valid,
+        "cache_expires_in": round(_cache_duration - cache_age, 1) if cache_valid else 0
+    }
     
-    return int(h), int(s), int(v)
+    return f"Cache Status: {status['cached_devices']} devices, age: {status['cache_age_seconds']}s, valid: {status['cache_valid']}"
 
 if __name__ == "__main__":
-    server.run() 
+    stdio_server(server) 

@@ -8,11 +8,11 @@ A sophisticated home automation and entertainment system featuring Salty, the AI
 - 📊 **Data Explorer**: Upload and explore CSV files
 - 📈 **Charts**: Multiple chart types and visualizations
 - 🤖 **Chat with Salty**: AI-powered chatbot using Google Gemini
-- 💡 **Smart Lights**: TP-Link smart bulb control with color presets
+- 💡 **TPLink Control**: TP-Link smart bulb control with color presets
 - 📚 **Knowledge Base**: RAG system with ChromaDB for document retrieval
 - ℹ️ **About**: Information about the app
 - 🤖 **AI Chatbot** - Salty powered by Google Gemini with personality
-- 💡 **Smart Lighting** - TP-Link smart bulb control with color presets
+- 💡 **TPLink Control** - TP-Link smart bulb control with color presets
 - 📚 **Knowledge Base** - RAG system with ChromaDB for document retrieval
 - 📊 **Data exploration tools** - Upload and analyze CSV files
 - 📈 **Multiple chart types** - Beautiful visualizations

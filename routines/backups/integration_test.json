@@ -1,0 +1,411 @@
+{
+  "custom_routines": {
+    "work_mode.json": {
+      "name": "Work Mode",
+      "description": "Bright white lights, focus music, and professional environment",
+      "steps": [
+        {
+          "type": "Light Control",
+          "action": "Set Color: White"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Brightness: 100%"
+        },
+        {
+          "type": "Music Control",
+          "action": "Pause"
+        },
+        {
+          "type": "Voice Command",
+          "action": "Work mode activated at The Gold Monkey. Time to be productive, matey!"
+        },
+        {
+          "type": "Wait",
+          "action": "2"
+        },
+        {
+          "type": "Voice Command",
+          "action": "The bar is quiet and ready for focused work. Good luck with your tasks!"
+        }
+      ],
+      "created": "2025-06-22 17:40:20",
+      "last_run": null
+    },
+    "relaxation_mode.json": {
+      "name": "Relaxation Mode",
+      "description": "Soft blue lights, ocean sounds, and calming atmosphere",
+      "steps": [
+        {
+          "type": "Light Control",
+          "action": "Set Color: Blue"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Brightness: 40%"
+        },
+        {
+          "type": "Music Control",
+          "action": "Play"
+        },
+        {
+          "type": "Voice Command",
+          "action": "Time to relax at The Gold Monkey. Let the ocean waves wash away your stress."
+        },
+        {
+          "type": "Wait",
+          "action": "3"
+        },
+        {
+          "type": "Voice Command",
+          "action": "Breathe in the tropical air and let your worries drift away on the breeze."
+        }
+      ],
+      "created": "2025-06-22 17:40:20",
+      "last_run": null
+    },
+    "movie_night.json": {
+      "name": "Movie Night",
+      "description": "Dim lights, turns on TV, and creates perfect movie-watching environment",
+      "steps": [
+        {
+          "type": "Light Control",
+          "action": "Set Color: Blue"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Brightness: 30%"
+        },
+        {
+          "type": "TV Control",
+          "action": "Power On"
+        },
+        {
+          "type": "Voice Command",
+          "action": "Movie night at The Gold Monkey! Dimming the lights for the perfect viewing experience."
+        },
+        {
+          "type": "Wait",
+          "action": "2"
+        },
+        {
+          "type": "Voice Command",
+          "action": "Grab your popcorn and get comfortable, matey!"
+        }
+      ],
+      "created": "2025-06-22 17:40:20",
+      "last_run": null
+    },
+    "evening_routine.json": {
+      "name": "Evening Routine",
+      "description": "Dim lights, ambient music, and creates a cozy evening atmosphere",
+      "steps": [
+        {
+          "type": "Light Control",
+          "action": "Set Color: Orange"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Brightness: 60%"
+        },
+        {
+          "type": "Music Control",
+          "action": "Play"
+        },
+        {
+          "type": "Voice Command",
+          "action": "Evening has arrived at The Gold Monkey, matey! Time to unwind and enjoy the sunset."
+        },
+        {
+          "type": "Wait",
+          "action": "2"
+        },
+        {
+          "type": "Voice Command",
+          "action": "The perfect time for a tropical cocktail and some island vibes!"
+        }
+      ],
+      "created": "2025-06-22 17:40:20",
+      "last_run": null
+    },
+    "tropical_sunset.json": {
+      "name": "Tropical Sunset",
+      "description": "Create a beautiful tropical sunset atmosphere",
+      "steps": [
+        {
+          "type": "Light Control",
+          "action": "Set Color: Orange"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Brightness: 70%"
+        },
+        {
+          "type": "Music Control",
+          "action": "Play"
+        },
+        {
+          "type": "Voice Command",
+          "action": "Ahoy matey! The sun is setting over The Gold Monkey. Time to enjoy the golden hour with a tropical cocktail!"
+        },
+        {
+          "type": "Wait",
+          "action": 3
+        },
+        {
+          "type": "Voice Command",
+          "action": "The perfect time to relax and watch the colors dance across the sky. Cheers to another beautiful day!"
+        }
+      ],
+      "created": "2024-01-15 18:30:00",
+      "last_run": "2024-01-15 21:00:00"
+    },
+    "morning_routine.json": {
+      "name": "Morning Routine",
+      "description": "Brightens lights, plays upbeat music, and Salty gives a morning greeting",
+      "steps": [
+        {
+          "type": "Light Control",
+          "action": "Turn On"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Color: Yellow"
+        },
+        {
+          "type": "Music Control",
+          "action": "Play"
+        },
+        {
+          "type": "Voice Command",
+          "action": "Good morning, matey! Time to start another beautiful day at The Gold Monkey!"
+        },
+        {
+          "type": "Wait",
+          "action": "2"
+        },
+        {
+          "type": "Voice Command",
+          "action": "The coffee is brewing and the tiki bar is ready for another adventure!"
+        }
+      ],
+      "created": "2025-06-22 17:40:20",
+      "last_run": null
+    },
+    "welcome_guests.json": {
+      "name": "Welcome Guests",
+      "description": "Salty greets guests with voice, plays welcome music, and sets welcoming lights",
+      "steps": [
+        {
+          "type": "Light Control",
+          "action": "Turn On"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Color: Green"
+        },
+        {
+          "type": "Music Control",
+          "action": "Play"
+        },
+        {
+          "type": "Voice Command",
+          "action": "Ahoy there, matey! Welcome to The Gold Monkey Tiki Bar!"
+        },
+        {
+          "type": "Wait",
+          "action": "2"
+        },
+        {
+          "type": "Voice Command",
+          "action": "I'm Salty, your host with the most attitude. What can I get for you today?"
+        },
+        {
+          "type": "Wait",
+          "action": "1"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Color: Orange"
+        }
+      ],
+      "created": "2025-06-22 17:40:20",
+      "last_run": null
+    },
+    "party_mode.json": {
+      "name": "Party Mode",
+      "description": "Colorful lights, upbeat music, and party atmosphere with Salty's entertainment",
+      "steps": [
+        {
+          "type": "Light Control",
+          "action": "Set Color: Purple"
+        },
+        {
+          "type": "Music Control",
+          "action": "Play"
+        },
+        {
+          "type": "Voice Command",
+          "action": "Party time at The Gold Monkey! Let's get this celebration started, matey!"
+        },
+        {
+          "type": "Wait",
+          "action": "1"
+        },
+        {
+          "type": "Voice Command",
+          "action": "Time to dance, drink, and make some memories!"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Color: Red"
+        },
+        {
+          "type": "Wait",
+          "action": "3"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Color: Blue"
+        },
+        {
+          "type": "Wait",
+          "action": "3"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Color: Green"
+        }
+      ],
+      "created": "2025-06-22 17:40:20",
+      "last_run": null
+    },
+    "movie_night_setup.json": {
+      "name": "Movie Night Setup",
+      "description": "Prepare the perfect movie night environment",
+      "steps": [
+        {
+          "type": "Light Control",
+          "action": "Set Color: Blue"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Brightness: 25%"
+        },
+        {
+          "type": "TV Control",
+          "action": "Power On"
+        },
+        {
+          "type": "Voice Command",
+          "action": "Movie night at The Gold Monkey! Dimming the lights for the perfect cinematic experience."
+        },
+        {
+          "type": "Wait",
+          "action": 2
+        },
+        {
+          "type": "Voice Command",
+          "action": "Grab your popcorn, settle in, and enjoy the show, matey!"
+        }
+      ],
+      "created": "2024-01-15 19:00:00",
+      "last_run": null
+    },
+    "sleep_mode.json": {
+      "name": "Sleep Mode",
+      "description": "Gradually dims lights, plays sleep sounds, and prepares for bedtime",
+      "steps": [
+        {
+          "type": "Voice Command",
+          "action": "Time to close up The Gold Monkey for the night, matey."
+        },
+        {
+          "type": "Wait",
+          "action": "2"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Brightness: 80%"
+        },
+        {
+          "type": "Wait",
+          "action": "2"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Brightness: 60%"
+        },
+        {
+          "type": "Wait",
+          "action": "2"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Brightness: 40%"
+        },
+        {
+          "type": "Wait",
+          "action": "2"
+        },
+        {
+          "type": "Light Control",
+          "action": "Set Brightness: 20%"
+        },
+        {
+          "type": "Wait",
+          "action": "2"
+        },
+        {
+          "type": "Light Control",
+          "action": "Turn Off"
+        },
+        {
+          "type": "Voice Command",
+          "action": "Sweet dreams, matey. The Gold Monkey will be here when you return!"
+        }
+      ],
+      "created": "2025-06-22 17:40:20",
+      "last_run": null
+    }
+  },
+  "routine_history": [
+    {
+      "routine_name": "Tropical Sunset",
+      "timestamp": "2024-01-15 21:00:00",
+      "status": "completed",
+      "duration": 4.5,
+      "notes": "Test execution from integration test"
+    },
+    {
+      "routine_name": "Tropical Sunset",
+      "timestamp": "2024-01-15 21:00:00",
+      "status": "completed",
+      "duration": 4.5,
+      "notes": "Test execution from integration test"
+    },
+    {
+      "routine_name": "Tropical Sunset",
+      "timestamp": "2024-01-15 21:00:00",
+      "status": "completed",
+      "duration": 4.5,
+      "notes": "Test execution from integration test"
+    },
+    {
+      "routine_name": "Tropical Sunset",
+      "timestamp": "2024-01-15 21:00:00",
+      "status": "completed",
+      "duration": 4.5,
+      "notes": "Test execution from integration test"
+    },
+    {
+      "routine_name": "Tropical Sunset",
+      "timestamp": "2024-01-15 21:00:00",
+      "status": "completed",
+      "duration": 4.5,
+      "notes": "Test execution from integration test"
+    }
+  ],
+  "backup_timestamp": "2025-06-22T17:41:42.917481",
+  "backup_name": "integration_test"
+}

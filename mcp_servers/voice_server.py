@@ -23,10 +23,11 @@ from pydub import AudioSegment
 from pydub.playback import play
 import pygame
 from pathlib import Path
+from urllib.parse import urlparse
+from dotenv import load_dotenv
 
 # Add project root to path for imports
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from utils.env_utils import get_env_vars
 from utils.tts_select import TTSSelector
 
 # --- Configuration ---
@@ -43,7 +44,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-AUDIO_DELAY = 0.2  # Base delay for audio effects
+AUDIO_DELAY = 0.15  # Reduced base delay for more responsive audio effects
 
 # --- FastAPI App ---
 app = FastAPI()
@@ -66,13 +67,16 @@ class VoiceServer:
         self.loop = asyncio.get_event_loop()
 
         # Load environment variables
-        env_vars = get_env_vars()
-        self.api_key = env_vars.get("ELEVENLABS_API_KEY")
-        self.voice_id = env_vars.get("ELEVENLABS_VOICE_ID")
-        self.tts_method = env_vars.get("TTS_METHOD", "elevenlabs")
+        self.api_key = os.getenv("ELEVENLABS_API_KEY")
+        self.voice_id = os.getenv("ELEVENLABS_VOICE_ID")
+        self.tts_method = os.getenv("TTS_METHOD")
+        if self.tts_method:
+            self.tts_method = self.tts_method.strip('"').strip("'")
+        if not self.tts_method:
+            raise Exception("TTS_METHOD environment variable is not set")
         
         # Audio components
-        self.tts_selector = TTSSelector(api_key=self.api_key, voice_id=self.voice_id)
+        self.tts_selector = TTSSelector()
         self.audio_cache = OrderedDict()
         self.cache_size = 50
         self.audio_queue = queue.Queue()
@@ -225,7 +229,7 @@ class VoiceServer:
                 if '?' in joke:
                     setup, punchline = joke.split('?', 1)
                     parts.append({'type': 'text', 'content': setup + '?'})
-                    parts.append({'type': 'pause', 'duration': 2.0})  # Dramatic pause for jokes
+                    parts.append({'type': 'pause', 'duration': 1.2})  # Optimized dramatic pause for jokes - shorter but still effective
                     parts.append({'type': 'text', 'content': punchline.strip()})
                 else:
                     parts.append({'type': 'text', 'content': joke})
@@ -260,11 +264,16 @@ class VoiceServer:
                 
                 # Add pause after each sentence except the last one
                 if i < len(sentences) - 1:
-                    # Longer pause for sentences ending with ! or ?
-                    if sentence.endswith(('!', '?')):
-                        parts.append({'type': 'pause', 'duration': 0.8})
+                    # Optimized pause durations for natural speech:
+                    # - Shorter pauses for better flow and engagement
+                    # - Slightly longer for questions/exclamations to allow for listener processing
+                    # - Based on linguistic research for conversational speech patterns
+                    if sentence.endswith('?'):
+                        parts.append({'type': 'pause', 'duration': 0.4})  # Question pause - allows for listener response
+                    elif sentence.endswith('!'):
+                        parts.append({'type': 'pause', 'duration': 0.3})  # Exclamation pause - shorter for excitement
                     else:
-                        parts.append({'type': 'pause', 'duration': 0.5})
+                        parts.append({'type': 'pause', 'duration': 0.25})  # Regular sentence pause - natural flow
         
         # If no sentence boundaries found, treat the whole text as one sentence
         if not sentences and text.strip():
@@ -273,68 +282,90 @@ class VoiceServer:
         return parts
 
     async def generate_salty_voice(self, text: str, voice_id: str = None) -> Dict[str, Any]:
-        """Generate Salty's voice using ElevenLabs."""
-        if not self.api_key:
-            return {"error": "ElevenLabs API key not configured"}
+        """Generate audio using the selected TTS method and return as base64."""
+        logger.info(f"Generating voice for: '{text}' using {self.tts_method}")
         
-        voice_to_use = voice_id or self.voice_id
-        cache_key = f"{voice_to_use}_{hash(text)}"
-        if cache_key in self.audio_cache:
-            logger.info("Using cached audio")
-            return {"audio_data": self.audio_cache[cache_key]}
-        
-        url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_to_use}"
-        headers = {"Accept": "audio/mpeg", "Content-Type": "application/json", "xi-api-key": self.api_key}
-        data = {
-            "text": text, "model_id": "eleven_monolingual_v1",
-            "voice_settings": {"stability": 0.7, "similarity_boost": 0.8, "style": 0.3, "use_speaker_boost": True}
-        }
         try:
-            response = requests.post(url, json=data, headers=headers)
-            response.raise_for_status()
-            audio_bytes = response.content
-            if len(self.audio_cache) >= self.cache_size:
-                self.audio_cache.popitem(last=False)
-            self.audio_cache[cache_key] = audio_bytes
-            return {"audio_data": audio_bytes}
-        except requests.exceptions.RequestException as e:
-            logger.error(f"ElevenLabs API request failed: {e}")
-            return {"error": str(e)}
+            # Use the provided voice_id or the default from environment
+            active_voice_id = voice_id or self.voice_id
+            
+            # Use TTSSelector to generate speech
+            result = await self.tts_selector.text_to_speech(text, active_voice_id)
+            
+            if result and result.get("audio_data"):
+                # Ensure audio_data is bytes
+                audio_bytes = result["audio_data"]
+                
+                # Cache the generated audio
+                self.audio_cache[text] = audio_bytes
+                if len(self.audio_cache) > self.cache_size:
+                    self.audio_cache.popitem(last=False)
+                    
+                # Return base64 encoded audio data
+                return {
+                    "status": "success",
+                    "audio_data": base64.b64encode(audio_bytes).decode('utf-8')
+                }
+            else:
+                logger.error(f"TTS generation failed. Result: {result}")
+                return {"status": "error", "message": result.get("error", "Unknown TTS error")}
+
+        except Exception as e:
+            logger.error(f"Error in generate_salty_voice: {e}", exc_info=True)
+            return {"status": "error", "message": str(e)}
 
     async def speak_text(self, text: str, voice_id: str = None, blocking: bool = True) -> Dict[str, Any]:
-        """Generate and play Salty's voice for text with effects."""
-        if self.tts_method == 'none':
-            return {"response": "Voice is disabled"}
+        """Process and speak text, returning audio data."""
+        logger.info(f"Speaking text: {text}")
+        full_audio_data = bytearray()
 
-        parts = await self.process_text_with_squawks(text)
-        
-        for part in parts:
-            completion_event = asyncio.Event()
+        try:
+            parts = await self.process_text_with_squawks(text)
+            
+            async def speak_part(part):
+                nonlocal full_audio_data
+                audio_data = None
+                if part['type'] == 'text':
+                    audio_data = await self.generate_salty_voice(part['content'], voice_id)
+                    if audio_data and audio_data.get("audio_data"):
+                        # Decode from base64 for processing and concatenation
+                        decoded_data = base64.b64decode(audio_data["audio_data"])
+                        full_audio_data.extend(decoded_data)
+                        completion_event = asyncio.Event()
+                        self.audio_queue.put(('mp3', decoded_data, completion_event))
+                        await completion_event.wait()
+                elif part['type'] == 'squawk':
+                    completion_event = asyncio.Event()
+                    self.audio_queue.put(('squawk', None, completion_event))
+                    await completion_event.wait()
+                elif part['type'] == 'screech':
+                    completion_event = asyncio.Event()
+                    self.audio_queue.put(('screech', None, completion_event))
+                    await completion_event.wait()
+                elif part['type'] == 'pause':
+                    await asyncio.sleep(part['duration'])
 
-            if part['type'] == 'pause':
-                await asyncio.sleep(part['duration'])
-                continue
-            elif part['type'] in ['squawk', 'screech']:
-                self.audio_queue.put((part['type'], None, completion_event))
-            elif part['type'] == 'text':
-                content = part['content']
-                if self.tts_method == 'gtts':
-                    voice_result = await self.tts_selector.text_to_speech(content)
-                    if "mp3_path" in voice_result:
-                        self.audio_queue.put(('file', voice_result["mp3_path"], completion_event))
-                    else:
-                        logger.error(f"gTTS failed: {voice_result.get('error')}")
-                        completion_event.set()
-                else:
-                    voice_result = await self.generate_salty_voice(content, voice_id)
-                    if "audio_data" in voice_result:
-                        self.audio_queue.put(('mp3', voice_result["audio_data"], completion_event))
-                    else:
-                        logger.error(f"ElevenLabs failed: {voice_result.get('error')}")
-                        completion_event.set()
             if blocking:
-                await completion_event.wait()
-        return {"response": "Text spoken successfully"}
+                for part in parts:
+                    await speak_part(part)
+            else:
+                asyncio.create_task(
+                    asyncio.gather(*(speak_part(p) for p in parts))
+                )
+
+            # Base64 encode the final concatenated audio data for the response
+            final_audio_b64 = base64.b64encode(full_audio_data).decode('utf-8')
+
+            return {
+                "status": "success",
+                "text": text,
+                "audio_data": final_audio_b64,
+                "blocking": blocking
+            }
+
+        except Exception as e:
+            logger.error(f"Error speaking text: {e}", exc_info=True)
+            raise HTTPException(status_code=500, detail=str(e))
 
     async def play_ambient_sound(self, sound_name: str, volume: float, loop: bool) -> Dict[str, Any]:
         # This is a stub. Implement logic to play ambient sounds.
@@ -406,4 +437,19 @@ async def get_audio_history_endpoint():
     return await app.state.voice_server.get_audio_history()
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8001) 
+    voice_server_url = os.getenv("VOICE_SERVER_URL", "http://localhost:9006")
+    
+    # Parse host and port from URL
+    parsed_url = urlparse(voice_server_url)
+    host = parsed_url.hostname or "0.0.0.0"
+    port = parsed_url.port or 9006
+    
+    logger.info(f"Starting voice server on {host}:{port}")
+    uvicorn.run(app, host=host, port=port)
+
+# Add debug prints at the very top to show the values of TTS_METHOD, ELEVENLABS_API_KEY, and ELEVENLABS_VOICE_ID as seen by the server process. This will help diagnose environment variable issues.
+load_dotenv()
+import os
+print("[DEBUG] TTS_METHOD in voice_server.py:", os.getenv("TTS_METHOD"))
+print("[DEBUG] ELEVENLABS_API_KEY in voice_server.py:", os.getenv("ELEVENLABS_API_KEY"))
+print("[DEBUG] ELEVENLABS_VOICE_ID in voice_server.py:", os.getenv("ELEVENLABS_VOICE_ID")) 

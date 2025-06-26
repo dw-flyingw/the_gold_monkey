@@ -1,0 +1,32 @@
+{
+  "name": "Movie Night Setup",
+  "description": "Prepare the perfect movie night environment",
+  "steps": [
+    {
+      "type": "Light Control",
+      "action": "Set Color: Blue"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Brightness: 25%"
+    },
+    {
+      "type": "TV Control",
+      "action": "Power On"
+    },
+    {
+      "type": "Voice Command",
+      "action": "Movie night at The Gold Monkey! Dimming the lights for the perfect cinematic experience."
+    },
+    {
+      "type": "Wait",
+      "action": 2
+    },
+    {
+      "type": "Voice Command",
+      "action": "Grab your popcorn, settle in, and enjoy the show, matey!"
+    }
+  ],
+  "created": "2024-01-15 19:00:00",
+  "last_run": null
+}

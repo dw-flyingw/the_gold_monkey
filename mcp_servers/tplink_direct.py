@@ -56,14 +56,59 @@ class TPLinkDirectClient:
     
     def __init__(self):
         """Initialize the TP-Link client"""
-        pass
+        self._device_cache = {}
+        self._cache_timestamp = 0
+        self._cache_duration = 30  # Cache devices for 30 seconds
+    
+    async def _get_cached_devices(self, force_refresh: bool = False) -> list:
+        """Get devices from cache or discover them if cache is stale"""
+        import time
+        
+        current_time = time.time()
+        
+        # Check if cache is valid
+        if (not force_refresh and 
+            self._device_cache and 
+            current_time - self._cache_timestamp < self._cache_duration):
+            logger.info("Using cached devices")
+            return list(self._device_cache.values())
+        
+        # Discover devices
+        logger.info("Discovering devices (cache miss or forced refresh)")
+        devices = await kasa.Discover.discover()
+        self._device_cache = devices
+        self._cache_timestamp = current_time
+        
+        return list(devices.values())
+    
+    def _is_light_device(self, device) -> bool:
+        """Check if device is a light that supports color/brightness control"""
+        try:
+            # Check if device has light-specific attributes
+            has_brightness = hasattr(device, 'brightness')
+            has_color = hasattr(device, 'set_hsv') or hasattr(device, '_set_hsv')
+            has_color_temp = hasattr(device, 'set_color_temp')
+            
+            # Device is a light if it has brightness control or color capabilities
+            return has_brightness or has_color or has_color_temp
+        except Exception:
+            return False
+    
+    def _get_light_devices(self, device_list: list) -> list:
+        """Filter device list to only include light devices"""
+        light_devices = []
+        for device in device_list:
+            if self._is_light_device(device):
+                light_devices.append(device)
+            else:
+                logger.debug(f"Skipping non-light device: {device.alias} ({type(device).__name__})")
+        return light_devices
     
     async def discover_devices(self) -> Dict[str, Any]:
         """Discover TP-Link devices on the network"""
         try:
             logger.info("Discovering TP-Link devices...")
-            devices = await kasa.Discover.discover()
-            device_list = list(devices.values())
+            device_list = await self._get_cached_devices()
             
             if not device_list:
                 return {"error": "No TP-Link devices found on the network"}
@@ -111,16 +156,21 @@ class TPLinkDirectClient:
         """Turn on all TP-Link smart lights"""
         try:
             logger.info("Turning on all TP-Link lights...")
-            devices = await kasa.Discover.discover()
-            device_list = list(devices.values())
+            device_list = await self._get_cached_devices()
             
             if not device_list:
                 return {"error": "No TP-Link devices found on the network"}
             
+            # Filter to only light devices
+            light_devices = self._get_light_devices(device_list)
+            
+            if not light_devices:
+                return {"error": "No TP-Link light devices found on the network"}
+            
             # Turn on all lights
             turned_on = 0
             errors = []
-            for device in device_list:
+            for device in light_devices:
                 try:
                     if hasattr(device, 'turn_on'):
                         await device.turn_on()
@@ -134,9 +184,9 @@ class TPLinkDirectClient:
                     errors.append(error_msg)
             
             if errors:
-                return {"response": f"🟢 Turned on {turned_on} out of {len(device_list)} devices", "warnings": errors}
+                return {"response": f"🟢 Turned on {turned_on} out of {len(light_devices)} light devices", "warnings": errors}
             else:
-                return {"response": f"🟢 Turned on {turned_on} out of {len(device_list)} devices"}
+                return {"response": f"🟢 Turned on {turned_on} out of {len(light_devices)} light devices"}
             
         except Exception as e:
             logger.error(f"Error turning on lights: {e}", exc_info=True)
@@ -146,16 +196,21 @@ class TPLinkDirectClient:
         """Turn off all TP-Link smart lights"""
         try:
             logger.info("Turning off all TP-Link lights...")
-            devices = await kasa.Discover.discover()
-            device_list = list(devices.values())
+            device_list = await self._get_cached_devices()
             
             if not device_list:
                 return {"error": "No TP-Link devices found on the network"}
             
+            # Filter to only light devices
+            light_devices = self._get_light_devices(device_list)
+            
+            if not light_devices:
+                return {"error": "No TP-Link light devices found on the network"}
+            
             # Turn off all lights
             turned_off = 0
             errors = []
-            for device in device_list:
+            for device in light_devices:
                 try:
                     if hasattr(device, 'turn_off'):
                         await device.turn_off()
@@ -169,9 +224,9 @@ class TPLinkDirectClient:
                     errors.append(error_msg)
             
             if errors:
-                return {"response": f"⚫ Turned off {turned_off} out of {len(device_list)} devices", "warnings": errors}
+                return {"response": f"⚫ Turned off {turned_off} out of {len(light_devices)} light devices", "warnings": errors}
             else:
-                return {"response": f"⚫ Turned off {turned_off} out of {len(device_list)} devices"}
+                return {"response": f"⚫ Turned off {turned_off} out of {len(light_devices)} light devices"}
             
         except Exception as e:
             logger.error(f"Error turning off lights: {e}", exc_info=True)
@@ -208,17 +263,22 @@ class TPLinkDirectClient:
             
             logger.info(f"RGB values: {rgb}")
             
-            # Discover devices
-            devices = await kasa.Discover.discover()
-            device_list = list(devices.values())
+            # Get devices from cache
+            device_list = await self._get_cached_devices()
             
             if not device_list:
                 return {"error": "No TP-Link devices found on the network"}
             
-            # Set color for all devices
+            # Filter to only light devices
+            light_devices = self._get_light_devices(device_list)
+            
+            if not light_devices:
+                return {"error": "No TP-Link light devices found on the network"}
+            
+            # Set color for all light devices
             updated = 0
             errors = []
-            for device in device_list:
+            for device in light_devices:
                 try:
                     if hasattr(device, '_set_hsv'):
                         # Convert RGB to HSV
@@ -248,9 +308,9 @@ class TPLinkDirectClient:
                     errors.append(error_msg)
             
             if errors:
-                return {"response": f"🎨 Set color to {color} for {updated} out of {len(device_list)} devices", "warnings": errors}
+                return {"response": f"🎨 Set color to {color} for {updated} out of {len(light_devices)} light devices", "warnings": errors}
             else:
-                return {"response": f"🎨 Set color to {color} for {updated} out of {len(device_list)} devices"}
+                return {"response": f"🎨 Set color to {color} for {updated} out of {len(light_devices)} light devices"}
             
         except Exception as e:
             logger.error(f"Error setting light color: {e}", exc_info=True)
@@ -260,15 +320,20 @@ class TPLinkDirectClient:
         """Get status of all TP-Link smart lights"""
         try:
             logger.info("Getting TP-Link light status...")
-            devices = await kasa.Discover.discover()
-            device_list = list(devices.values())
+            device_list = await self._get_cached_devices()
             
             if not device_list:
                 return {"error": "No TP-Link devices found on the network"}
             
-            # Get status for all devices
+            # Filter to only light devices
+            light_devices = self._get_light_devices(device_list)
+            
+            if not light_devices:
+                return {"error": "No TP-Link light devices found on the network"}
+            
+            # Get status for all light devices
             status_info = []
-            for device in device_list:
+            for device in light_devices:
                 try:
                     await device.update()
                     status = {
@@ -287,7 +352,7 @@ class TPLinkDirectClient:
                         "error": str(e)
                     })
             
-            result_text = f"Status of {len(device_list)} TP-Link device(s):\n\n"
+            result_text = f"Status of {len(light_devices)} TP-Link light device(s):\n\n"
             for status in status_info:
                 result_text += f"• {status['alias']} ({status['ip']})\n"
                 if 'is_on' in status and status['is_on'] is not None:
@@ -305,32 +370,98 @@ class TPLinkDirectClient:
         except Exception as e:
             logger.error(f"Error getting light status: {e}", exc_info=True)
             return {"error": f"Error getting light status: {str(e)}"}
+    
+    async def get_all_device_status(self) -> Dict[str, Any]:
+        """Get status of all TP-Link devices (including non-lights)"""
+        try:
+            logger.info("Getting all TP-Link device status...")
+            device_list = await self._get_cached_devices()
+            
+            if not device_list:
+                return {"error": "No TP-Link devices found on the network"}
+            
+            # Get status for all devices
+            status_info = []
+            for device in device_list:
+                try:
+                    await device.update()
+                    status = {
+                        "alias": device.alias,
+                        "ip": device.host,
+                        "type": type(device).__name__,
+                        "is_on": device.is_on if hasattr(device, 'is_on') else None,
+                        "brightness": device.brightness if hasattr(device, 'brightness') else None,
+                        "color_temp": device.color_temp if hasattr(device, 'color_temp') else None
+                    }
+                    status_info.append(status)
+                except Exception as e:
+                    logger.warning(f"Error getting status for device {device.host}: {e}")
+                    status_info.append({
+                        "alias": device.alias,
+                        "ip": device.host,
+                        "type": type(device).__name__,
+                        "error": str(e)
+                    })
+            
+            result_text = f"Status of {len(device_list)} TP-Link device(s):\n\n"
+            for status in status_info:
+                result_text += f"• {status['alias']} ({status['type']}) at {status['ip']}\n"
+                if 'is_on' in status and status['is_on'] is not None:
+                    result_text += f"  Status: {'🟢 On' if status['is_on'] else '⚫ Off'}\n"
+                if 'brightness' in status and status['brightness'] is not None:
+                    result_text += f"  Brightness: {status['brightness']}%\n"
+                if 'color_temp' in status and status['color_temp'] is not None:
+                    result_text += f"  Color Temp: {status['color_temp']}K\n"
+                if 'error' in status:
+                    result_text += f"  Error: {status['error']}\n"
+                result_text += "\n"
+            
+            return {"response": result_text.strip(), "devices": status_info}
+            
+        except Exception as e:
+            logger.error(f"Error getting device status: {e}", exc_info=True)
+            return {"error": f"Error getting device status: {str(e)}"}
+
+# Global client instance for caching
+_global_client = None
+
+def _get_client():
+    """Get or create the global TP-Link client instance"""
+    global _global_client
+    if _global_client is None:
+        _global_client = TPLinkDirectClient()
+    return _global_client
 
 # Convenience functions for direct use
 async def discover_tplink_devices() -> Dict[str, Any]:
     """Discover TP-Link devices on the network"""
-    client = TPLinkDirectClient()
+    client = _get_client()
     return await client.discover_devices()
 
 async def turn_on_tplink_lights() -> Dict[str, Any]:
     """Turn on all TP-Link lights"""
-    client = TPLinkDirectClient()
+    client = _get_client()
     return await client.turn_on_lights()
 
 async def turn_off_tplink_lights() -> Dict[str, Any]:
     """Turn off all TP-Link lights"""
-    client = TPLinkDirectClient()
+    client = _get_client()
     return await client.turn_off_lights()
 
 async def set_tplink_color(color: str) -> Dict[str, Any]:
     """Set color for all TP-Link lights"""
-    client = TPLinkDirectClient()
+    client = _get_client()
     return await client.set_light_color(color)
 
 async def get_tplink_status() -> Dict[str, Any]:
     """Get status of all TP-Link lights"""
-    client = TPLinkDirectClient()
+    client = _get_client()
     return await client.get_light_status()
+
+async def get_all_tplink_status() -> Dict[str, Any]:
+    """Get status of all TP-Link devices (including non-lights)"""
+    client = _get_client()
+    return await client.get_all_device_status()
 
 if __name__ == "__main__":
     # Test the client

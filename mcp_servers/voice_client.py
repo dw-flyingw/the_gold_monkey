@@ -15,7 +15,6 @@ import httpx
 
 # Add the parent directory to the path to import utils
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-from utils.env_utils import get_voice_server_url
 
 # Ensure logs directory exists
 LOGS_DIR = Path(__file__).parent.parent / "logs"
@@ -32,8 +31,8 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Voice server configuration using proper .env parsing
-VOICE_SERVER_URL = get_voice_server_url()
+# Voice server configuration using environment variables
+VOICE_SERVER_URL = os.getenv('VOICE_SERVER_URL', 'http://localhost:9006')
 
 class VoiceClient:
     """Voice client for voice synthesis"""

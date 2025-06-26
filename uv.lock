@@ -6719,7 +6719,7 @@ wheels = [
 [[package]]
 name = "the-gold-monkey"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "adafruit-circuitpython-dht", marker = "sys_platform == 'linux'" },
     { name = "adafruit-circuitpython-pca9685", marker = "sys_platform == 'linux'" },

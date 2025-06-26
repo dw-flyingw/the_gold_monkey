@@ -1,0 +1,32 @@
+{
+  "name": "Relaxation Mode",
+  "description": "Soft blue lights, ocean sounds, and calming atmosphere",
+  "steps": [
+    {
+      "type": "Light Control",
+      "action": "Set Color: Blue"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Brightness: 40%"
+    },
+    {
+      "type": "Music Control",
+      "action": "Play"
+    },
+    {
+      "type": "Voice Command",
+      "action": "Time to relax at The Gold Monkey. Let the ocean waves wash away your stress."
+    },
+    {
+      "type": "Wait",
+      "action": "3"
+    },
+    {
+      "type": "Voice Command",
+      "action": "Breathe in the tropical air and let your worries drift away on the breeze."
+    }
+  ],
+  "created": "2025-06-22 17:40:20",
+  "last_run": null
+}

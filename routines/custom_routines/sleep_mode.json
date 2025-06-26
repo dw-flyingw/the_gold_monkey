@@ -1,0 +1,56 @@
+{
+  "name": "Sleep Mode",
+  "description": "Gradually dims lights, plays sleep sounds, and prepares for bedtime",
+  "steps": [
+    {
+      "type": "Voice Command",
+      "action": "Time to close up The Gold Monkey for the night, matey."
+    },
+    {
+      "type": "Wait",
+      "action": "2"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Brightness: 80%"
+    },
+    {
+      "type": "Wait",
+      "action": "2"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Brightness: 60%"
+    },
+    {
+      "type": "Wait",
+      "action": "2"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Brightness: 40%"
+    },
+    {
+      "type": "Wait",
+      "action": "2"
+    },
+    {
+      "type": "Light Control",
+      "action": "Set Brightness: 20%"
+    },
+    {
+      "type": "Wait",
+      "action": "2"
+    },
+    {
+      "type": "Light Control",
+      "action": "Turn Off"
+    },
+    {
+      "type": "Voice Command",
+      "action": "Sweet dreams, matey. The Gold Monkey will be here when you return!"
+    }
+  ],
+  "created": "2025-06-22 17:40:20",
+  "last_run": null
+}
