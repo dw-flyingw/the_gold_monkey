@@ -51,15 +51,15 @@ def get_image_as_base64(path: Path) -> str:
 
 # Configure Gemini
 def configure_gemini():
-    api_key = os.getenv('GEMINI_API_KEY')
+    api_key = os.getenv('SALTY_GEMINI_API_KEY')
     if not api_key or api_key == 'your_gemini_api_key_here':
-        st.error("⚠️ Please set your GEMINI_API_KEY in the .env file")
+        st.error("⚠️ Please set your SALTY_GEMINI_API_KEY in the .env file")
         st.info("""
         ### Setup Instructions:
         1. Get your Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
         2. Update the `.env` file with your API key:
            ```
-           GEMINI_API_KEY=your_actual_api_key_here
+           SALTY_GEMINI_API_KEY=your_actual_api_key_here
            ```
         3. Restart the app
         """)
@@ -74,11 +74,11 @@ def configure_gemini():
 def get_gemini_config():
     """Get Gemini configuration from environment variables"""
     return {
-        'api_key': os.getenv('GEMINI_API_KEY'),
-        'model': os.getenv('GEMINI_MODEL', 'gemini-pro'),
-        'temperature': float(os.getenv('GEMINI_TEMPERATURE', 0.7)),
-        'max_tokens': int(os.getenv('GEMINI_MAX_TOKENS', 1000)),
-        'is_configured': os.getenv('GEMINI_API_KEY') and os.getenv('GEMINI_API_KEY') != 'your_gemini_api_key_here'
+        'api_key': os.getenv('SALTY_GEMINI_API_KEY'),
+        'model': os.getenv('SALTY_GEMINI_MODEL', 'gemini-pro'),
+        'temperature': float(os.getenv('SALTY_GEMINI_TEMPERATURE', 0.7)),
+        'max_tokens': int(os.getenv('SALTY_GEMINI_MAX_TOKENS', 1000)),
+        'is_configured': os.getenv('SALTY_GEMINI_API_KEY') and os.getenv('SALTY_GEMINI_API_KEY') != 'your_gemini_api_key_here'
     }
 def get_salty_personality():
     """Get Salty's personality and character traits"""
@@ -390,10 +390,10 @@ def chat_with_salty_direct(message: str, conversation_history: list = None):
         import google.generativeai as genai
         
         # Configure Gemini
-        api_key = os.getenv('GEMINI_API_KEY')
-        model_name = os.getenv('GEMINI_MODEL', 'gemini-pro')
-        temperature = float(os.getenv('GEMINI_TEMPERATURE', 0.7))
-        max_tokens = int(os.getenv('GEMINI_MAX_TOKENS', 1000))
+        api_key = os.getenv('SALTY_GEMINI_API_KEY')
+        model_name = os.getenv('SALTY_GEMINI_MODEL', 'gemini-2.0-flash')
+        temperature = float(os.getenv('SALTY_GEMINI_TEMPERATURE', 0.7))
+        max_tokens = int(os.getenv('SALTY_GEMINI_MAX_TOKENS', 1000))
         
         if not api_key or api_key == 'your_gemini_api_key_here':
             return {"error": "Gemini API key not configured", "response": ""}
@@ -464,7 +464,7 @@ def chat_with_salty_direct(message: str, conversation_history: list = None):
         
         # Generate response using environment variables
         model = genai.GenerativeModel(
-            model_name=model_name,
+            model_name,
             generation_config=genai.types.GenerationConfig(
                 temperature=temperature,
                 max_output_tokens=max_tokens,
@@ -478,12 +478,12 @@ def chat_with_salty_direct(message: str, conversation_history: list = None):
         return {"error": str(e), "response": "🦜 Squawk! Something went wrong with my brain, matey!"}
 def get_salty_config_direct():
     """Get Salty's configuration directly"""
-    api_key = os.getenv('GEMINI_API_KEY')
+    api_key = os.getenv('SALTY_GEMINI_API_KEY')
     return {
         'api_key': api_key,
-        'model': os.getenv('GEMINI_MODEL', 'gemini-pro'),
-        'temperature': float(os.getenv('GEMINI_TEMPERATURE', 0.7)),
-        'max_tokens': int(os.getenv('GEMINI_MAX_TOKENS', 1000)),
+        'model': os.getenv('SALTY_GEMINI_MODEL', 'gemini-2.0-flash'),
+        'temperature': float(os.getenv('SALTY_GEMINI_TEMPERATURE', 0.7)),
+        'max_tokens': int(os.getenv('SALTY_GEMINI_MAX_TOKENS', 1000)),
         'is_configured': api_key and api_key != 'your_gemini_api_key_here'
     }
 def get_salty_personality_direct():
@@ -735,13 +735,13 @@ def show_chatbot():
     
     # Check if Gemini is configured
     if not config.get('is_configured', False):
-        st.error("⚠️ Please set your GEMINI_API_KEY in the .env file")
+        st.error("⚠️ Please set your SALTY_GEMINI_API_KEY in the .env file")
         st.info("""
         ### Setup Instructions:
         1. Get your Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
         2. Update the `.env` file with your API key:
            ```
-           GEMINI_API_KEY=your_actual_api_key_here
+           SALTY_GEMINI_API_KEY=your_actual_api_key_here
            ```
         3. Restart the app
         """)
@@ -795,9 +795,11 @@ def show_chatbot():
                     # Add assistant response to chat history
                     st.session_state.messages.append({"role": "assistant", "content": response_text})
                     
-                    # Check if voice is enabled using environment variable
-                    tts_method = get_tts_method()
-                    if tts_method != 'none':
+                    # Check if voice is enabled (both toggle and environment variable)
+                    voice_enabled = st.session_state.get('voice_enabled', True)
+                    tts_method = os.getenv('TTS_METHOD')
+                    
+                    if voice_enabled and tts_method != 'none':
                         # Extract just the text content (remove emojis and formatting for speech)
                         speech_text = response_text
                         # Remove emoji prefixes and markdown formatting
@@ -811,6 +813,12 @@ def show_chatbot():
                             speak_salty_voice_sync(speech_text, blocking=True)
                         except Exception as e:
                             st.warning(f"Voice synthesis failed: {e}")
+                    elif not voice_enabled:
+                        # Voice is disabled by user toggle
+                        pass
+                    else:
+                        # Voice is disabled by environment variable
+                        pass
             except Exception as e:
                 error_message = f"🦜 Squawk! Something went wrong: {str(e)}"
                 message_placeholder.error(error_message)
@@ -831,8 +839,26 @@ def show_chatbot():
         # Voice control settings
         st.subheader("🗣️ Voice Settings")
         
+        # Voice toggle - store in session state
+        if "voice_enabled" not in st.session_state:
+            st.session_state.voice_enabled = True  # Default to enabled
+        
+        voice_toggle = st.toggle(
+            "🎤 Enable Voice", 
+            value=st.session_state.voice_enabled,
+            help="Turn Salty's voice on or off"
+        )
+        
+        # Update session state when toggle changes
+        if voice_toggle != st.session_state.voice_enabled:
+            st.session_state.voice_enabled = voice_toggle
+            if voice_toggle:
+                st.success("🎤 Voice enabled! Salty will speak his responses.")
+            else:
+                st.info("🔇 Voice disabled. Salty will respond silently.")
+        
         # Get TTS method from environment variable
-        tts_method = get_tts_method()
+        tts_method = os.getenv('TTS_METHOD')
         
         # Display current TTS method
         if tts_method == 'none':
@@ -855,17 +881,17 @@ def show_chatbot():
         
         st.markdown("---")
         st.markdown("**Configuration:**")
-        st.write(f"Model: {config.get('model', 'gemini-pro')}")
+        st.write(f"Model: {config.get('model', 'gemini-2.0-flash')}")
         st.write(f"Temperature: {config.get('temperature', 0.7)}")
         st.write(f"Max Tokens: {config.get('max_tokens', 1000)}")
         
         st.markdown("---")
         st.markdown("**Environment Variables:**")
         st.code(f"""
-GEMINI_API_KEY: {'✅ Set' if config.get('is_configured') else '❌ Not set'}
-GEMINI_MODEL: {config.get('model', 'gemini-pro')}
-GEMINI_TEMPERATURE: {config.get('temperature', 0.7)}
-GEMINI_MAX_TOKENS: {config.get('max_tokens', 1000)}
+SALTY_GEMINI_API_KEY: {'✅ Set' if config.get('is_configured') else '❌ Not set'}
+SALTY_GEMINI_MODEL: {config.get('model', 'gemini-2.0-flash')}
+SALTY_GEMINI_TEMPERATURE: {config.get('temperature', 0.7)}
+SALTY_GEMINI_MAX_TOKENS: {config.get('max_tokens', 1000)}
 TTS_METHOD: {tts_method}
         """)
         

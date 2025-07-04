@@ -149,7 +149,7 @@ mcp dev mcp_servers/roku_server.py
 ## Environment Requirements
 
 ### Required Environment Variables
-- `GEMINI_API_KEY` - For SaltyBot AI functionality
+- `SALTY_GEMINI_API_KEY` - For SaltyBot AI functionality
 - `SPOTIFY_CLIENT_ID` - For Spotify integration
 - `SPOTIFY_CLIENT_SECRET` - For Spotify integration
 - `SPOTIFY_REDIRECT_URI` - For Spotify integration

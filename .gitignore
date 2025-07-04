@@ -41,6 +41,12 @@ venv.bak/
 *.swo
 *~
 
+# Gemini
+.gemini
+
+# Cursor
+.cursor
+
 # OS
 .DS_Store
 .DS_Store?

@@ -18,7 +18,7 @@ class RAGMCPClient:
     
     def __init__(self, server_path: str = None):
         """Initialize the RAG MCP client"""
-        self.server_path = server_path or "mcp_servers/rag_server.py"
+        self.server_path = server_path or os.getenv("RAG_SERVER_PATH", "mcp_servers/rag_server.py")
     
     async def _call_tool(self, tool_name: str, arguments: dict = None) -> Dict[str, Any]:
         """Call a tool on the RAG MCP server"""

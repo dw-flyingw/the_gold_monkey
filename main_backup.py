@@ -40,15 +40,15 @@ load_dotenv()
 
 # Configure Gemini
 def configure_gemini():
-    api_key = os.getenv('GEMINI_API_KEY')
+    api_key = os.getenv('SALTY_GEMINI_API_KEY')
     if not api_key or api_key == 'your_gemini_api_key_here':
-        st.error("⚠️ Please set your GEMINI_API_KEY in the .env file")
+        st.error("⚠️ Please set your SALTY_GEMINI_API_KEY in the .env file")
         st.info("""
         ### Setup Instructions:
         1. Get your Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
         2. Update the `.env` file with your API key:
            ```
-           GEMINI_API_KEY=your_actual_api_key_here
+           SALTY_GEMINI_API_KEY=your_actual_api_key_here
            ```
         3. Restart the app
         """)
@@ -64,11 +64,11 @@ def configure_gemini():
 def get_gemini_config():
     """Get Gemini configuration from environment variables"""
     return {
-        'api_key': os.getenv('GEMINI_API_KEY'),
+        'api_key': os.getenv('SALTY_GEMINI_API_KEY'),
         'model': os.getenv('GEMINI_MODEL', 'gemini-pro'),
         'temperature': float(os.getenv('GEMINI_TEMPERATURE', 0.7)),
         'max_tokens': int(os.getenv('GEMINI_MAX_TOKENS', 1000)),
-        'is_configured': os.getenv('GEMINI_API_KEY') and os.getenv('GEMINI_API_KEY') != 'your_gemini_api_key_here'
+        'is_configured': os.getenv('SALTY_GEMINI_API_KEY') and os.getenv('SALTY_GEMINI_API_KEY') != 'your_gemini_api_key_here'
     }
 
 def get_salty_personality():
@@ -410,7 +410,7 @@ def chat_with_salty_direct(message: str, conversation_history: list = None):
         import google.generativeai as genai
         
         # Configure Gemini
-        api_key = os.getenv('GEMINI_API_KEY')
+        api_key = os.getenv('SALTY_GEMINI_API_KEY')
         model_name = os.getenv('GEMINI_MODEL', 'gemini-pro')
         temperature = float(os.getenv('GEMINI_TEMPERATURE', 0.7))
         max_tokens = int(os.getenv('GEMINI_MAX_TOKENS', 1000))
@@ -490,7 +490,7 @@ def chat_with_salty_direct(message: str, conversation_history: list = None):
 
 def get_salty_config_direct():
     """Get Salty's configuration directly"""
-    api_key = os.getenv('GEMINI_API_KEY')
+    api_key = os.getenv('SALTY_GEMINI_API_KEY')
     return {
         'api_key': api_key,
         'model': os.getenv('GEMINI_MODEL', 'gemini-pro'),
@@ -739,13 +739,13 @@ def show_chatbot():
     
     # Check if Gemini is configured
     if not config.get('is_configured', False):
-        st.error("⚠️ Please set your GEMINI_API_KEY in the .env file")
+        st.error("⚠️ Please set your SALTY_GEMINI_API_KEY in the .env file")
         st.info("""
         ### Setup Instructions:
         1. Get your Gemini API key from [Google AI Studio](https://makersuite.google.com/app/apikey)
         2. Update the `.env` file with your API key:
            ```
-           GEMINI_API_KEY=your_actual_api_key_here
+           SALTY_GEMINI_API_KEY=your_actual_api_key_here
            ```
         3. Restart the app
         """)
@@ -849,7 +849,7 @@ def show_chatbot():
         st.markdown("---")
         st.markdown("**Environment Variables:**")
         st.code(f"""
-GEMINI_API_KEY: {'✅ Set' if config.get('is_configured') else '❌ Not set'}
+SALTY_GEMINI_API_KEY: {'✅ Set' if config.get('is_configured') else '❌ Not set'}
 GEMINI_MODEL: {config.get('model', 'gemini-pro')}
 GEMINI_TEMPERATURE: {config.get('temperature', 0.7)}
 GEMINI_MAX_TOKENS: {config.get('max_tokens', 1000)}

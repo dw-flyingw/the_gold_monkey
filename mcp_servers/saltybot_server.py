@@ -55,13 +55,13 @@ async def chat_with_salty(message: str, conversation_history: List[Dict] = None)
         import google.generativeai as genai
         
         # Configure Gemini
-        api_key = os.getenv('GEMINI_API_KEY')
-        model_name = os.getenv('GEMINI_MODEL', 'gemini-pro')
-        temperature = float(os.getenv('GEMINI_TEMPERATURE', 0.7))
-        max_tokens = int(os.getenv('GEMINI_MAX_TOKENS', 1000))
+        api_key = os.getenv('SALTY_GEMINI_API_KEY')
+        model_name = os.getenv('SALTY_GEMINI_MODEL', 'gemini-2.0-flash')
+        temperature = float(os.getenv('SALTY_GEMINI_TEMPERATURE', 0.7))
+        max_tokens = int(os.getenv('SALTY_GEMINI_MAX_TOKENS', 1000))
         
         if not api_key or api_key == 'your_gemini_api_key_here':
-            return "🦜 Squawk! My brain isn't configured properly, matey! Please set your GEMINI_API_KEY in the .env file."
+            return "🦜 Squawk! My brain isn't configured properly, matey! Please set your SALTY_GEMINI_API_KEY in the .env file."
         
         genai.configure(api_key=api_key)
         
@@ -119,13 +119,7 @@ async def chat_with_salty(message: str, conversation_history: List[Dict] = None)
         messages.append({"role": "user", "parts": [message]})
         
         # Generate response using environment variables
-        model = genai.GenerativeModel(
-            model_name=model_name,
-            generation_config=genai.types.GenerationConfig(
-                temperature=temperature,
-                max_output_tokens=max_tokens,
-            )
-        )
+        model = genai.GenerativeModel(os.getenv('SALTY_GEMINI_MODEL', 'gemini-2.0-flash'))
         response = model.generate_content(messages)
         
         return response.text
@@ -138,12 +132,12 @@ async def chat_with_salty(message: str, conversation_history: List[Dict] = None)
 async def get_salty_config() -> str:
     """Get Salty's current configuration"""
     try:
-        api_key = os.getenv('GEMINI_API_KEY')
+        api_key = os.getenv('SALTY_GEMINI_API_KEY')
         config = {
             'api_key': 'Set' if api_key and api_key != 'your_gemini_api_key_here' else 'Not set',
-            'model': os.getenv('GEMINI_MODEL', 'gemini-pro'),
-            'temperature': float(os.getenv('GEMINI_TEMPERATURE', 0.7)),
-            'max_tokens': int(os.getenv('GEMINI_MAX_TOKENS', 1000))
+            'model': os.getenv('SALTY_GEMINI_MODEL', 'gemini-2.0-flash'),
+            'temperature': float(os.getenv('SALTY_GEMINI_TEMPERATURE', 0.7)),
+            'max_tokens': int(os.getenv('SALTY_GEMINI_MAX_TOKENS', 1000))
         }
         
         config_text = "🦜 **Salty's Configuration**\n\n"
@@ -188,7 +182,7 @@ async def generate_tiki_story(theme: str = "tropical") -> str:
         import google.generativeai as genai
         
         # Configure Gemini
-        api_key = os.getenv('GEMINI_API_KEY')
+        api_key = os.getenv('SALTY_GEMINI_API_KEY')
         if not api_key or api_key == 'your_gemini_api_key_here':
             return "🦜 Squawk! My brain isn't configured properly, matey!"
         
@@ -205,7 +199,7 @@ Make it engaging, slightly mischievous, and include:
 
 Keep it under 200 words and make it feel like you're telling it to a patron at the bar."""
 
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel(os.getenv('SALTY_GEMINI_MODEL', 'gemini-2.0-flash'))
         response = model.generate_content(story_prompt)
         
         return response.text
@@ -221,7 +215,7 @@ async def recommend_drink(preferences: str = "classic") -> str:
         import google.generativeai as genai
         
         # Configure Gemini
-        api_key = os.getenv('GEMINI_API_KEY')
+        api_key = os.getenv('SALTY_GEMINI_API_KEY')
         if not api_key or api_key == 'your_gemini_api_key_here':
             return "🦜 Squawk! My brain isn't configured properly, matey!"
         
@@ -238,7 +232,7 @@ Include:
 
 Keep it under 150 words and make it feel like you're personally recommending it to a patron."""
 
-        model = genai.GenerativeModel('gemini-pro')
+        model = genai.GenerativeModel(os.getenv('SALTY_GEMINI_MODEL', 'gemini-2.0-flash'))
         response = model.generate_content(drink_prompt)
         
         return response.text

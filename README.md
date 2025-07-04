@@ -108,7 +108,7 @@ The servers will show their status in the Streamlit app sidebar when running.
    ```
    
    Required variables:
-   - `GEMINI_API_KEY` - Your Google Gemini API key
+   - `SALTY_GEMINI_API_KEY` - Your Google Gemini API key
    - `EMBEDDING_MODEL` - Sentence transformer model (default: sentence-transformers/all-MiniLM-L6-v2)
 
 4. **Add markdown files to the knowledge base:**
