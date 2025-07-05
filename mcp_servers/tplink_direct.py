@@ -152,7 +152,7 @@ class TPLinkDirectClient:
             logger.error(f"Error discovering devices: {e}", exc_info=True)
             return {"error": f"Error discovering TP-Link devices: {str(e)}"}
     
-    async def turn_on_lights(self) -> Dict[str, Any]:
+    async def turn_on_lights(self, device_alias: str = None) -> Dict[str, Any]:
         """Turn on all TP-Link smart lights"""
         try:
             logger.info("Turning on all TP-Link lights...")
@@ -166,7 +166,10 @@ class TPLinkDirectClient:
             
             if not light_devices:
                 return {"error": "No TP-Link light devices found on the network"}
-            
+
+            if device_alias and device_alias != "All Devices":
+                light_devices = [d for d in light_devices if d.alias == device_alias]
+
             # Turn on all lights
             turned_on = 0
             errors = []
@@ -192,7 +195,7 @@ class TPLinkDirectClient:
             logger.error(f"Error turning on lights: {e}", exc_info=True)
             return {"error": f"Error turning on lights: {str(e)}"}
     
-    async def turn_off_lights(self) -> Dict[str, Any]:
+    async def turn_off_lights(self, device_alias: str = None) -> Dict[str, Any]:
         """Turn off all TP-Link smart lights"""
         try:
             logger.info("Turning off all TP-Link lights...")
@@ -206,7 +209,10 @@ class TPLinkDirectClient:
             
             if not light_devices:
                 return {"error": "No TP-Link light devices found on the network"}
-            
+
+            if device_alias and device_alias != "All Devices":
+                light_devices = [d for d in light_devices if d.alias == device_alias]
+
             # Turn off all lights
             turned_off = 0
             errors = []
@@ -232,7 +238,7 @@ class TPLinkDirectClient:
             logger.error(f"Error turning off lights: {e}", exc_info=True)
             return {"error": f"Error turning off lights: {str(e)}"}
     
-    async def set_light_color(self, color: str) -> Dict[str, Any]:
+    async def set_light_color(self, color: str, device_alias: str = None) -> Dict[str, Any]:
         """Set color for all TP-Link smart lights"""
         try:
             logger.info(f"Setting light color to: {color}")
@@ -274,7 +280,10 @@ class TPLinkDirectClient:
             
             if not light_devices:
                 return {"error": "No TP-Link light devices found on the network"}
-            
+
+            if device_alias and device_alias != "All Devices":
+                light_devices = [d for d in light_devices if d.alias == device_alias]
+
             # Set color for all light devices
             updated = 0
             errors = []
@@ -315,6 +324,48 @@ class TPLinkDirectClient:
         except Exception as e:
             logger.error(f"Error setting light color: {e}", exc_info=True)
             return {"error": f"Error setting light color: {str(e)}"}
+    
+    async def set_light_brightness(self, brightness: int, device_alias: str = None) -> Dict[str, Any]:
+        """Set brightness for TP-Link smart lights"""
+        try:
+            logger.info(f"Setting light brightness to: {brightness}%")
+            
+            device_list = await self._get_cached_devices()
+            
+            if not device_list:
+                return {"error": "No TP-Link devices found on the network"}
+            
+            light_devices = self._get_light_devices(device_list)
+            
+            if not light_devices:
+                return {"error": "No TP-Link light devices found on the network"}
+
+            if device_alias and device_alias != "All Devices":
+                light_devices = [d for d in light_devices if d.alias == device_alias]
+
+            updated = 0
+            errors = []
+            for device in light_devices:
+                try:
+                    if hasattr(device, 'set_brightness'):
+                        await device.set_brightness(brightness)
+                        updated += 1
+                        logger.info(f"Set brightness for {device.alias} to {brightness}%")
+                    else:
+                        logger.warning(f"Device {device.alias} does not support brightness control")
+                except Exception as e:
+                    error_msg = f"Error setting brightness for {device.alias}: {e}"
+                    logger.warning(error_msg)
+                    errors.append(error_msg)
+            
+            if errors:
+                return {"response": f"💡 Set brightness to {brightness}% for {updated} out of {len(light_devices)} light devices", "warnings": errors}
+            else:
+                return {"response": f"💡 Set brightness to {brightness}% for {updated} out of {len(light_devices)} light devices"}
+            
+        except Exception as e:
+            logger.error(f"Error setting light brightness: {e}", exc_info=True)
+            return {"error": f"Error setting light brightness: {str(e)}"}
     
     async def get_light_status(self) -> Dict[str, Any]:
         """Get status of all TP-Link smart lights"""
@@ -438,20 +489,25 @@ async def discover_tplink_devices() -> Dict[str, Any]:
     client = _get_client()
     return await client.discover_devices()
 
-async def turn_on_tplink_lights() -> Dict[str, Any]:
+async def turn_on_tplink_lights(device=None) -> Dict[str, Any]:
     """Turn on all TP-Link lights"""
     client = _get_client()
-    return await client.turn_on_lights()
+    return await client.turn_on_lights(device)
 
-async def turn_off_tplink_lights() -> Dict[str, Any]:
+async def turn_off_tplink_lights(device=None) -> Dict[str, Any]:
     """Turn off all TP-Link lights"""
     client = _get_client()
-    return await client.turn_off_lights()
+    return await client.turn_off_lights(device)
 
-async def set_tplink_color(color: str) -> Dict[str, Any]:
+async def set_tplink_color(color: str, device=None) -> Dict[str, Any]:
     """Set color for all TP-Link lights"""
     client = _get_client()
-    return await client.set_light_color(color)
+    return await client.set_light_color(color, device)
+
+async def set_tplink_brightness(brightness: int, device=None) -> Dict[str, Any]:
+    """Set brightness for all TP-Link lights"""
+    client = _get_client()
+    return await client.set_light_brightness(brightness, device)
 
 async def get_tplink_status() -> Dict[str, Any]:
     """Get status of all TP-Link lights"""
@@ -462,6 +518,18 @@ async def get_all_tplink_status() -> Dict[str, Any]:
     """Get status of all TP-Link devices (including non-lights)"""
     client = _get_client()
     return await client.get_all_device_status()
+
+async def get_tools() -> Dict[str, Any]:
+    """Get a dictionary of all available tools"""
+    return {
+        "discover_tplink_devices": discover_tplink_devices,
+        "turn_on_tplink_lights": turn_on_tplink_lights,
+        "turn_off_tplink_lights": turn_off_tplink_lights,
+        "set_tplink_color": set_tplink_color,
+        "set_tplink_brightness": set_tplink_brightness,
+        "get_tplink_status": get_tplink_status,
+        "get_all_tplink_status": get_all_tplink_status,
+    }
 
 if __name__ == "__main__":
     # Test the client

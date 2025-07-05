@@ -1,0 +1,24 @@
+[
+  {
+    "tool_name": "test_tool",
+    "category": "ToolCategory.MEDIA",
+    "executed_at": 1751680677.116378,
+    "execution_time": 1.0,
+    "success": true,
+    "parameters": {},
+    "result": {},
+    "error_message": null,
+    "goal_id": null
+  },
+  {
+    "tool_name": "test_tool",
+    "category": "ToolCategory.MEDIA",
+    "executed_at": 1751680974.879339,
+    "execution_time": 1.0,
+    "success": true,
+    "parameters": {},
+    "result": {},
+    "error_message": null,
+    "goal_id": null
+  }
+]

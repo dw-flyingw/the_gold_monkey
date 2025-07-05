@@ -789,6 +789,15 @@ wheels = [
 ]
 
 [[package]]
+name = "daemonize"
+version = "2.5.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/8c/20/96f7dbc23812cfe4cf479c87af3e4305d0d115fd1fffec32ddeee7b9c82b/daemonize-2.5.0.tar.gz", hash = "sha256:dd026e4ff8d22cb016ed2130bc738b7d4b1da597ef93c074d2adb9e4dea08bc3", size = 8759, upload-time = "2018-12-12T19:47:39.57Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/45/ad/1b20db02287afd40d3130a218ac5ce2f7d2ab581cfda29bada5e1c4bee17/daemonize-2.5.0-py2.py3-none-any.whl", hash = "sha256:9b6b91311a9d934ff3f5f766666635ca280d3de8e7137e4cd7d3f052543b989f", size = 5231, upload-time = "2018-12-12T19:47:37.831Z" },
+]
+
+[[package]]
 name = "decorator"
 version = "5.2.1"
 source = { registry = "https://pypi.org/simple" }
@@ -3097,6 +3106,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/a1/ca/40e14e196864a0f61a92abb14d09b3d3da98f94ccb03b49cf51688140dab/pydeck-0.9.1.tar.gz", hash = "sha256:f74475ae637951d63f2ee58326757f8d4f9cd9f2a457cf42950715003e2cb605", size = 3832240, upload-time = "2024-05-10T15:36:21.153Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ab/4c/b888e6cf58bd9db9c93f40d1c6be8283ff49d88919231afe93a6bcf61626/pydeck-0.9.1-py2.py3-none-any.whl", hash = "sha256:b3f75ba0d273fc917094fa61224f3f6076ca8752b93d46faf3bcfd9f9d59b038", size = 6900403, upload-time = "2024-05-10T15:36:17.36Z" },
+]
+
+[[package]]
+name = "pydub"
+version = "0.25.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/fe/9a/e6bca0eed82db26562c73b5076539a4a08d3cffd19c3cc5913a3e61145fd/pydub-0.25.1.tar.gz", hash = "sha256:980a33ce9949cab2a569606b65674d748ecbca4f0796887fd6f46173a7b0d30f", size = 38326, upload-time = "2021-03-10T02:09:54.659Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/a6/53/d78dc063216e62fc55f6b2eebb447f6a4b0a59f55c8406376f76bf959b08/pydub-0.25.1-py2.py3-none-any.whl", hash = "sha256:65617e33033874b59d87db603aa1ed450633288aefead953b30bded59cb599a6", size = 32327, upload-time = "2021-03-10T02:09:53.503Z" },
 ]
 
 [[package]]
@@ -6725,6 +6743,7 @@ dependencies = [
     { name = "adafruit-circuitpython-pca9685", marker = "sys_platform == 'linux'" },
     { name = "anthropic" },
     { name = "chromadb" },
+    { name = "daemonize" },
     { name = "elevenlabs" },
     { name = "fastapi" },
     { name = "google-generativeai" },
@@ -6744,6 +6763,7 @@ dependencies = [
     { name = "psutils" },
     { name = "pyaudio" },
     { name = "pydantic" },
+    { name = "pydub" },
     { name = "pygame" },
     { name = "pyserial" },
     { name = "python-dotenv" },
@@ -6767,6 +6787,7 @@ requires-dist = [
     { name = "adafruit-circuitpython-pca9685", marker = "sys_platform == 'linux'", specifier = ">=3.4.0" },
     { name = "anthropic", specifier = ">=0.7.0" },
     { name = "chromadb", specifier = ">=0.4.0" },
+    { name = "daemonize" },
     { name = "elevenlabs", specifier = ">=0.2.26" },
     { name = "fastapi", specifier = ">=0.68.0" },
     { name = "google-generativeai", specifier = ">=0.3.0" },
@@ -6786,6 +6807,7 @@ requires-dist = [
     { name = "psutils", specifier = ">=3.3.10" },
     { name = "pyaudio", specifier = ">=0.2.11" },
     { name = "pydantic", specifier = ">=1.8.0" },
+    { name = "pydub", specifier = ">=0.25.1" },
     { name = "pygame", specifier = ">=2.5.0" },
     { name = "pyserial", specifier = ">=3.5" },
     { name = "python-dotenv", specifier = ">=1.0.0" },

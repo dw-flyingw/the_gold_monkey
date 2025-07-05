@@ -1,0 +1,127 @@
+[
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.0625,
+    "timestamp": "2025-07-04T10:28:44.155714"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.03125,
+    "timestamp": "2025-07-04T11:28:20.088715"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 23.625,
+    "timestamp": "2025-07-04T11:28:59.056944"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.046875,
+    "timestamp": "2025-07-04T11:56:45.211316"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.046875,
+    "timestamp": "2025-07-04T11:58:43.002240"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.03125,
+    "timestamp": "2025-07-04T12:03:06.838522"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.03125,
+    "timestamp": "2025-07-04T12:03:31.120582"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.046875,
+    "timestamp": "2025-07-04T12:06:13.446934"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.046875,
+    "timestamp": "2025-07-04T12:06:17.122826"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.046875,
+    "timestamp": "2025-07-04T12:06:33.414146"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.046875,
+    "timestamp": "2025-07-04T12:07:19.216411"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.046875,
+    "timestamp": "2025-07-04T12:07:26.975144"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.046875,
+    "timestamp": "2025-07-04T12:07:43.144821"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.03125,
+    "timestamp": "2025-07-04T12:10:53.119406"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.03125,
+    "timestamp": "2025-07-04T12:17:32.534528"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.03125,
+    "timestamp": "2025-07-04T12:17:56.410300"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 1.03125,
+    "timestamp": "2025-07-04T12:22:59.662988"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 26.4375,
+    "timestamp": "2025-07-04T19:01:30.670017"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 33.515625,
+    "timestamp": "2025-07-04T19:49:11.256234"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 33.34375,
+    "timestamp": "2025-07-04T20:24:59.449129"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 28.03125,
+    "timestamp": "2025-07-04T20:28:03.283148"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 12.46875,
+    "timestamp": "2025-07-04T20:30:44.229054"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 33.359375,
+    "timestamp": "2025-07-04T21:14:58.334796"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 33.359375,
+    "timestamp": "2025-07-04T21:15:35.726547"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 33.359375,
+    "timestamp": "2025-07-04T21:15:47.563477"
+  }
+]

@@ -7,6 +7,7 @@ Communicates with RAG MCP server for knowledge base functionality
 import asyncio
 import json
 import logging
+import os
 from typing import Dict, Any, List
 from mcp.client.session import ClientSession
 from mcp.client.stdio import StdioServerParameters, stdio_client
@@ -36,7 +37,10 @@ class RAGMCPClient:
                 if result.content and len(result.content) > 0:
                     content = result.content[0]
                     if hasattr(content, 'text'):
-                        return {"response": content.text}
+                        try:
+                            return json.loads(content.text)
+                        except json.JSONDecodeError:
+                            return {"response": content.text}
                     else:
                         return {"response": str(content)}
                 else:
@@ -48,26 +52,26 @@ class RAGMCPClient:
     
     async def query_documents(self, query: str, top_k: int = 5) -> Dict[str, Any]:
         """Query RAG documents"""
-        return await self._call_tool("query_rag_documents", {"query": query, "top_k": top_k})
+        return await self._call_tool("query_documents", {"query": query, "top_k": top_k})
     
     async def rebuild_database(self) -> Dict[str, Any]:
         """Rebuild the RAG database"""
-        return await self._call_tool("rebuild_rag_database")
+        return await self._call_tool("rebuild_database")
     
     async def list_documents(self) -> Dict[str, Any]:
         """List all documents"""
-        return await self._call_tool("list_rag_documents")
+        return await self._call_tool("list_documents")
     
     async def add_document(self, content: str, metadata: Dict[str, Any] = None) -> Dict[str, Any]:
         """Add a document to the database"""
         args = {"content": content}
         if metadata:
             args["metadata"] = metadata
-        return await self._call_tool("add_rag_document", args)
+        return await self._call_tool("add_document", args)
     
     async def get_stats(self) -> Dict[str, Any]:
         """Get RAG database statistics"""
-        return await self._call_tool("get_rag_stats")
+        return await self._call_tool("get_database_stats")
 
 # Convenience functions for direct use
 async def query_rag_documents(query: str, top_k: int = 5) -> Dict[str, Any]:
@@ -94,6 +98,16 @@ async def get_rag_stats() -> Dict[str, Any]:
     """Get RAG database statistics"""
     client = RAGMCPClient()
     return await client.get_stats()
+
+async def get_tools() -> Dict[str, Any]:
+    """Get a dictionary of all available tools"""
+    return {
+        "query_rag_documents": query_rag_documents,
+        "rebuild_rag_database": rebuild_rag_database,
+        "list_rag_documents": list_rag_documents,
+        "add_rag_document": add_rag_document,
+        "get_rag_stats": get_rag_stats,
+    }
 
 if __name__ == "__main__":
     # Test the client

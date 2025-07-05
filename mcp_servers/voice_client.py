@@ -40,29 +40,33 @@ class VoiceClient:
     def __init__(self):
         """Initialize the voice client"""
         self.server_url = VOICE_SERVER_URL
+        self.client = httpx.AsyncClient(
+            base_url=self.server_url,
+            timeout=60.0  # Longer timeout for voice generation
+        )
         logger.info(f"Voice client initialized with server URL: {self.server_url}")
     
     async def _make_request(self, method: str, endpoint: str, json_data: Dict = None) -> Dict[str, Any]:
-        """Make HTTP request with a fresh client"""
+        """Make HTTP request using the shared client"""
         try:
-            async with httpx.AsyncClient(
-                base_url=self.server_url,
-                timeout=60.0  # Longer timeout for voice generation
-            ) as client:
-                if method.upper() == "GET":
-                    response = await client.get(endpoint)
-                else:
-                    response = await client.post(endpoint, json=json_data)
+            if method.upper() == "GET":
+                response = await self.client.get(endpoint)
+            else:
+                response = await self.client.post(endpoint, json=json_data)
+            
+            if response.status_code == 200:
+                return response.json()
+            else:
+                return {"error": f"HTTP {response.status_code}: {response.text}"}
                 
-                if response.status_code == 200:
-                    return response.json()
-                else:
-                    return {"error": f"HTTP {response.status_code}: {response.text}"}
-                    
         except Exception as e:
             logger.error(f"Error making request to {endpoint}: {e}", exc_info=True)
             return {"error": f"Request failed: {str(e)}"}
     
+    async def close(self):
+        """Close the httpx client"""
+        await self.client.aclose()
+
     async def generate_salty_voice(self, text: str, voice_id: str = None) -> Dict[str, Any]:
         """Generate Salty's voice for given text"""
         return await self._make_request("POST", "/generate_voice", {
@@ -126,20 +130,13 @@ async def get_audio_history() -> Dict[str, Any]:
     """Get audio generation history"""
     return await voice_client.get_audio_history()
 
-# Test function
-async def test():
-    """Test the voice client"""
-    try:
-        # Test getting available voices
-        voices = await get_available_voices()
-        print(f"Available voices: {voices}")
-        
-        # Test speaking text
-        result = await speak_text("Squawk! Welcome to The Gold Monkey, matey!")
-        print(f"Speak result: {result}")
-        
-    except Exception as e:
-        print(f"Test failed: {e}")
-
-if __name__ == "__main__":
-    asyncio.run(test()) 
+async def get_tools() -> Dict[str, Any]:
+    """Get a dictionary of all available tools"""
+    return {
+        "generate_salty_voice": generate_salty_voice,
+        "speak_text": speak_text,
+        "play_ambient_sound": play_ambient_sound,
+        "stop_all_audio": stop_all_audio,
+        "get_available_voices": get_available_voices,
+        "get_audio_history": get_audio_history,
+    }

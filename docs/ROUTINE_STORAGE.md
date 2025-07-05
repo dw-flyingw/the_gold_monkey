@@ -1,6 +1,6 @@
 # Routine Storage System
 
-The Gold Monkey now features a persistent routine storage system that saves each custom routine in its own JSON file within the `routines/` folder structure.
+The Gold Monkey now features a persistent routine storage system that saves each custom routine in its own JSON file within the `data/routines/` folder structure.
 
 ## Overview
 
@@ -15,8 +15,8 @@ The routine storage system provides:
 ## File Structure
 
 ```
-routines/
-├── custom_routines/           # Individual routine files
+data/routines/
+├── custom_data/routines/           # Individual routine files
 │   ├── tropical_sunset.json
 │   ├── movie_night_setup.json
 │   ├── party_mode.json
@@ -66,7 +66,7 @@ routines/
 ### 3. Backup & Restore
 - Create timestamped backups of all routine data
 - Restore from any previous backup
-- Backup files stored in `routines/backups/`
+- Backup files stored in `data/routines/backups/`
 
 ### 4. Statistics & Analytics
 - Total custom routines count
@@ -199,7 +199,7 @@ Supported step types for routines:
 1. Go to Routines → Storage & Backup tab
 2. Enter optional backup name
 3. Click "Create Backup"
-4. Backup saved to `routines/backups/`
+4. Backup saved to `data/routines/backups/`
 
 ### Restoring Backups
 1. Go to Routines → Storage & Backup tab
@@ -208,20 +208,20 @@ Supported step types for routines:
 4. All routine data restored from backup
 
 ### Manual File Editing
-- Individual routines: Edit files in `routines/custom_routines/`
-- History: Edit `routines/routine_history.json`
-- Backup files: Edit any file in `routines/backups/`
+- Individual routines: Edit files in `data/routines/custom_data/routines/`
+- History: Edit `data/routines/routine_history.json`
+- Backup files: Edit any file in `data/routines/backups/`
 
 ### File Operations
 ```bash
 # Copy a routine to share
-cp routines/custom_routines/tropical_sunset.json shared_routines/
+cp data/routines/custom_data/routines/tropical_sunset.json shared_data/routines/
 
 # Rename a routine file
-mv routines/custom_routines/old_name.json routines/custom_routines/new_name.json
+mv data/routines/custom_data/routines/old_name.json data/routines/custom_data/routines/new_name.json
 
 # Delete a routine
-rm routines/custom_routines/unwanted_routine.json
+rm data/routines/custom_data/routines/unwanted_routine.json
 ```
 
 ## Error Handling
@@ -254,7 +254,7 @@ The storage system includes comprehensive error handling:
 ### Common Issues
 
 1. **Routines Not Loading**
-   - Check file permissions on `routines/custom_routines/` folder
+   - Check file permissions on `data/routines/custom_data/routines/` folder
    - Verify JSON syntax in individual routine files
    - Check app logs for error messages
 
@@ -286,13 +286,13 @@ python utils/migrate_routine_storage.py
 python utils/load_sample_routines.py
 
 # Check file structure
-ls -la routines/custom_routines/
+ls -la data/routines/custom_data/routines/
 
 # Validate JSON syntax
-python -m json.tool routines/custom_routines/tropical_sunset.json
+python -m json.tool data/routines/custom_data/routines/tropical_sunset.json
 
 # Count routine files
-find routines/custom_routines/ -name "*.json" | wc -l
+find data/routines/custom_data/routines/ -name "*.json" | wc -l
 ```
 
 ## Migration

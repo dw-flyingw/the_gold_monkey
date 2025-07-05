@@ -34,7 +34,7 @@ server = FastMCP("rag-server")
 
 def get_disable_telemetry():
     val = os.getenv("CHROMA_DISABLE_TELEMETRY", "false")
-    val = val.strip('\'\"").lower()
+    val = val.strip('\'"').lower()
     return val == "true"
 
 @server.tool()

@@ -18,7 +18,7 @@ def load_sample_routines():
     routine_storage = get_routine_storage()
     
     # Load sample routines from file
-    sample_file = "routines/sample_routines.json"
+    sample_file = "data/routines/sample_routines.json"
     
     try:
         with open(sample_file, 'r', encoding='utf-8') as f:

@@ -157,5 +157,9 @@ def main():
     # Show the mcp run commands
     show_mcp_run_commands()
 
+    # Stop any running servers
+    print("\n🛑 Stopping any running servers...")
+    subprocess.run(["python", "utils/stop_servers.py", "all"])
+
 if __name__ == "__main__":
     main() 

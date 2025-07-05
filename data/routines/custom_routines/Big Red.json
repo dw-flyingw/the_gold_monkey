@@ -1,0 +1,15 @@
+{
+    "name": "Big Red",
+    "description": "",
+    "steps": [
+        {
+            "type": "Light Control",
+            "actions": {
+                "power": "Turn On",
+                "color": "#f30606",
+                "brightness": 100
+            },
+            "device": "All Devices"
+        }
+    ]
+}

@@ -437,12 +437,15 @@ async def get_audio_history_endpoint():
     return await app.state.voice_server.get_audio_history()
 
 if __name__ == "__main__":
-    voice_server_url = os.getenv("VOICE_SERVER_URL", "http://localhost:9006")
-    
-    # Parse host and port from URL
-    parsed_url = urlparse(voice_server_url)
-    host = parsed_url.hostname or "0.0.0.0"
-    port = parsed_url.port or 9006
+    voice_server_url = os.getenv("VOICE_SERVER_URL")
+    if not voice_server_url:
+        host = os.getenv("VOICE_SERVER_HOST", "0.0.0.0")
+        port = int(os.getenv("VOICE_SERVER_PORT", 9006))
+    else:
+        # Parse host and port from URL
+        parsed_url = urlparse(voice_server_url)
+        host = parsed_url.hostname
+        port = parsed_url.port
     
     logger.info(f"Starting voice server on {host}:{port}")
     uvicorn.run(app, host=host, port=port)

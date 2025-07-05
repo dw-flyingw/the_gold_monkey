@@ -57,7 +57,8 @@ def get_roku_base_url():
     """Get Roku base URL with dynamic IP discovery"""
     roku_ip = discover_roku_ip()
     if roku_ip:
-        return f"http://{roku_ip}:8060"
+        port = os.getenv("ROKU_PORT", "8060")
+        return f"http://{roku_ip}:{port}"
     return None
 
 def roku_post(endpoint: str, data: Optional[dict] = None) -> bool:
@@ -514,4 +515,26 @@ async def get_apps() -> Dict[str, Any]:
 async def get_device_status() -> Dict[str, Any]:
     """Get comprehensive Roku device status"""
     client = RokuClient()
-    return await client.get_device_status() 
+    return await client.get_device_status()
+
+async def get_tools() -> Dict[str, Any]:
+    """Get a dictionary of all available tools"""
+    return {
+        "power_on": power_on,
+        "power_off": power_off,
+        "home": home,
+        "launch_app": launch_app,
+        "volume_up": volume_up,
+        "volume_down": volume_down,
+        "mute": mute,
+        "info": info,
+        "up": up,
+        "down": down,
+        "left": left,
+        "right": right,
+        "select": select,
+        "back": back,
+        "get_apps": get_apps,
+        "get_device_status": get_device_status,
+    }
+ 

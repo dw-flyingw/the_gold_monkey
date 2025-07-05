@@ -663,6 +663,23 @@ async def get_user_playlists() -> Dict[str, Any]:
     """Get user's playlists to help find valid playlist IDs"""
     return await spotify_client.get_user_playlists()
 
+async def get_tools() -> Dict[str, Any]:
+    """Get a dictionary of all available tools"""
+    return {
+        "play_spotify": play_spotify,
+        "pause_spotify": pause_spotify,
+        "next_track": next_track,
+        "previous_track": previous_track,
+        "set_volume": set_volume,
+        "play_playlist": play_playlist,
+        "play_track": play_track,
+        "get_playback_status": get_playback_status,
+        "get_playlist_info": get_playlist_info,
+        "get_available_devices": get_available_devices,
+        "test_playlist_access": test_playlist_access,
+        "get_user_playlists": get_user_playlists,
+    }
+
 # Test function
 async def test():
     """Test the Spotify client"""

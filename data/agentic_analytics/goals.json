@@ -1,0 +1,32 @@
+[
+  {
+    "goal_id": "test_goal_1",
+    "goal_type": "entertainment",
+    "description": "Test goal",
+    "priority": 3,
+    "created_at": 1751680677.113348,
+    "started_at": null,
+    "completed_at": null,
+    "status": "GoalStatus.PENDING",
+    "tools_used": null,
+    "success_rate": 0.0,
+    "execution_time": 0.0,
+    "reasoning": null,
+    "user_feedback": null
+  },
+  {
+    "goal_id": "test_goal_1",
+    "goal_type": "entertainment",
+    "description": "Test goal",
+    "priority": 3,
+    "created_at": 1751680974.878856,
+    "started_at": null,
+    "completed_at": null,
+    "status": "GoalStatus.PENDING",
+    "tools_used": null,
+    "success_rate": 0.0,
+    "execution_time": 0.0,
+    "reasoning": null,
+    "user_feedback": null
+  }
+]

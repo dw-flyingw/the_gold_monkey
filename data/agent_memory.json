@@ -1,0 +1,46 @@
+{
+  "conversation_history": [
+    {
+      "role": "user",
+      "content": "Play tropical music and create a relaxing atmosphere",
+      "timestamp": "2025-07-04T18:57:57.656483"
+    },
+    {
+      "role": "assistant",
+      "content": "\ud83e\udd9c Squawk! My brain is having trouble thinking, matey!",
+      "timestamp": "2025-07-04T18:57:57.656495",
+      "reasoning": {
+        "primary_intent": "conversation",
+        "secondary_intents": [],
+        "recommended_tools": [],
+        "potential_issues": [],
+        "confidence": 0.5
+      },
+      "actions_taken": 0
+    },
+    {
+      "role": "user",
+      "content": "Play tropical music and create a relaxing atmosphere",
+      "timestamp": "2025-07-04T19:02:55.261475"
+    },
+    {
+      "role": "assistant",
+      "content": "\ud83e\udd9c Squawk! My brain is having trouble thinking, matey!",
+      "timestamp": "2025-07-04T19:02:55.261480",
+      "reasoning": {
+        "primary_intent": "conversation",
+        "secondary_intents": [],
+        "recommended_tools": [],
+        "potential_issues": [],
+        "confidence": 0.5
+      },
+      "actions_taken": 0
+    }
+  ],
+  "tool_usage_patterns": {},
+  "user_preferences": {
+    "test_pref": "test_value"
+  },
+  "successful_goals": [],
+  "failed_goals": []
+}

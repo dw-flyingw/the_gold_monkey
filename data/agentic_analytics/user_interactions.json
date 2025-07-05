@@ -1,0 +1,26 @@
+[
+  {
+    "session_id": "test_session",
+    "user_input": "Test input",
+    "agent_response": "Test response",
+    "timestamp": 1751680677.120617,
+    "reasoning": {},
+    "goals_created": 1,
+    "tools_executed": 1,
+    "successful_actions": 1,
+    "failed_actions": 0,
+    "user_satisfaction": null
+  },
+  {
+    "session_id": "test_session",
+    "user_input": "Test input",
+    "agent_response": "Test response",
+    "timestamp": 1751680974.879649,
+    "reasoning": {},
+    "goals_created": 1,
+    "tools_executed": 1,
+    "successful_actions": 1,
+    "failed_actions": 0,
+    "user_satisfaction": null
+  }
+]

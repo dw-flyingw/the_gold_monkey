@@ -68,7 +68,8 @@ def get_roku_base_url():
     """Get Roku base URL with dynamic IP discovery"""
     roku_ip = discover_roku_ip()
     if roku_ip:
-        return f"http://{roku_ip}:8060"
+        port = os.getenv("ROKU_PORT", "8060")
+        return f"http://{roku_ip}:{port}"
     return None
 
 def roku_post(endpoint: str, data: Optional[dict] = None) -> bool:
@@ -193,21 +194,25 @@ async def mute() -> str:
 @server.tool()
 async def info() -> str:
     """Get Roku device status and information"""
-    # Get device info
-    device_info = await get_device_info()
-    
-    # Get current app info
-    app_info = await get_current_app()
-    
-    # Get active apps
-    active_apps = await get_active_apps()
-    
-    # Combine all information
-    status = f"{device_info}\n\n"
-    status += f"{app_info}\n\n"
-    status += f"{active_apps}"
-    
-    return status
+    try:
+        # Get device info
+        device_info = await get_device_info()
+        
+        # Get current app info
+        app_info = await get_current_app()
+        
+        # Get active apps
+        active_apps = await get_active_apps()
+        
+        # Combine all information
+        status = f"{device_info}\n\n"
+        status += f"{app_info}\n\n"
+        status += f"{active_apps}"
+        
+        return status
+    except Exception as e:
+        logger.error(f"Error in info function: {e}")
+        return f"🦜 Squawk! Error getting device info: {str(e)}"
 
 @server.tool()
 async def get_current_app() -> str:
@@ -259,23 +264,27 @@ async def get_active_apps() -> str:
 @server.tool()
 async def get_device_status() -> str:
     """Get comprehensive Roku device status"""
-    # Get device info
-    device_info = await get_device_info()
-    
-    # Get current app
-    current_app = await get_current_app()
-    
-    # Get network info
-    network_info = await get_network_info()
-    
-    # Combine all status information
-    status = f"📺 ROKU DEVICE STATUS\n"
-    status += f"{'='*50}\n\n"
-    status += f"{device_info}\n\n"
-    status += f"{current_app}\n\n"
-    status += f"{network_info}"
-    
-    return status
+    try:
+        # Get device info
+        device_info = await get_device_info()
+        
+        # Get current app
+        current_app = await get_current_app()
+        
+        # Get network info
+        network_info = await get_network_info()
+        
+        # Combine all status information
+        status = f"📺 ROKU DEVICE STATUS\n"
+        status += f"{'='*50}\n\n"
+        status += f"{device_info}\n\n"
+        status += f"{current_app}\n\n"
+        status += f"{network_info}"
+        
+        return status
+    except Exception as e:
+        logger.error(f"Error in get_device_status function: {e}")
+        return f"🦜 Squawk! Error getting device status: {str(e)}"
 
 @server.tool()
 async def get_network_info() -> str:
