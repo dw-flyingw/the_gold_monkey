@@ -331,19 +331,39 @@ async def play_spotify_playlist(playlist_id: str):
         return {"error": str(e), "response": "Failed to play playlist"}
 
 async def control_tplink_lights(action, color=None, brightness=None, device=None):
-    """Control TP-Link lights"""
+    """Control TP-Link lights with cache rebuilding on errors"""
     try:
         if action == "turn_on":
             result = await turn_on_tplink_lights(device)
+            # If there's an error, try rebuilding the cache
+            if "error" in result and "No TP-Link devices found" in result.get("error", ""):
+                logger.info("No devices found, rebuilding cache...")
+                await rebuild_tplink_cache()
+                result = await turn_on_tplink_lights(device)
             return result.get("response", "All lights turned on! 🟢")
         elif action == "turn_off":
             result = await turn_off_tplink_lights(device)
+            # If there's an error, try rebuilding the cache
+            if "error" in result and "No TP-Link devices found" in result.get("error", ""):
+                logger.info("No devices found, rebuilding cache...")
+                await rebuild_tplink_cache()
+                result = await turn_off_tplink_lights(device)
             return result.get("response", "All lights turned off! ⚫")
         elif action == "set_color" and color:
             result = await set_tplink_color(color, device)
+            # If there's an error, try rebuilding the cache
+            if "error" in result and "No TP-Link devices found" in result.get("error", ""):
+                logger.info("No devices found, rebuilding cache...")
+                await rebuild_tplink_cache()
+                result = await set_tplink_color(color, device)
             return result.get("response", f"All lights set to {color}! 🎨")
         elif action == "set_brightness" and brightness:
             result = await set_tplink_brightness(brightness, device)
+            # If there's an error, try rebuilding the cache
+            if "error" in result and "No TP-Link devices found" in result.get("error", ""):
+                logger.info("No devices found, rebuilding cache...")
+                await rebuild_tplink_cache()
+                result = await set_tplink_brightness(brightness, device)
             return result.get("response", f"All lights set to {brightness}%! 💡")
         else:
             return "Invalid action"
@@ -605,3 +625,41 @@ def get_available_voices_sync():
     except Exception as e:
         st.error(f"🦜 Squawk! Error: {e}")
         return {"error": str(e), "response": "Failed to get voices"}
+
+async def initialize_tplink_cache():
+    """Initialize TP-Link device cache on startup"""
+    try:
+        logger.info("Initializing TP-Link device cache...")
+        from mcp_servers.tplink_direct import _get_client
+        client = _get_client()
+        # Force a cache refresh to populate the cache
+        await client._get_cached_devices(force_refresh=True)
+        logger.info("TP-Link device cache initialized successfully")
+        return {"status": "success", "message": "TP-Link cache initialized"}
+    except Exception as e:
+        logger.error(f"Error initializing TP-Link cache: {e}")
+        return {"status": "error", "message": str(e)}
+
+async def rebuild_tplink_cache():
+    """Rebuild the TP-Link device cache"""
+    try:
+        logger.info("Rebuilding TP-Link device cache...")
+        from mcp_servers.tplink_direct import _get_client
+        client = _get_client()
+        # Force a cache refresh
+        await client._get_cached_devices(force_refresh=True)
+        logger.info("TP-Link device cache rebuilt successfully")
+        return {"status": "success", "message": "TP-Link cache rebuilt"}
+    except Exception as e:
+        logger.error(f"Error rebuilding TP-Link cache: {e}")
+        return {"status": "error", "message": str(e)}
+
+async def get_tplink_cache_status():
+    """Get the current TP-Link cache status"""
+    try:
+        from mcp_servers.tplink_direct import get_tplink_cache_status as direct_cache_status
+        result = await direct_cache_status()
+        return result
+    except Exception as e:
+        logger.error(f"Error getting TP-Link cache status: {e}")
+        return {"error": str(e), "status": {}}

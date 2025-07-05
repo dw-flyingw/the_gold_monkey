@@ -78,8 +78,8 @@ def show_smart_home_controls():
                 st.success(f"{selected_light} light turned off!")
         
         with light_col3:
-            brightness = st.slider("Brightness", 0, 100, 50, key="brightness_slider")
-            if st.button("💡 Set", key="set_brightness"):
+            brightness = st.slider("Brightness", 0, 100, 50, key="automation_brightness_slider")
+            if st.button("💡 Set", key="automation_set_brightness"):
                 st.success(f"{selected_light} brightness set to {brightness}%!")
     
     with col2:

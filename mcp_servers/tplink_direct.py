@@ -472,6 +472,25 @@ class TPLinkDirectClient:
         except Exception as e:
             logger.error(f"Error getting device status: {e}", exc_info=True)
             return {"error": f"Error getting device status: {str(e)}"}
+    
+    async def get_cache_status(self) -> Dict[str, Any]:
+        """Get the current cache status"""
+        import time
+        
+        current_time = time.time()
+        cache_age = current_time - self._cache_timestamp
+        cache_valid = cache_age < self._cache_duration
+        
+        status = {
+            "cached_devices": len(self._device_cache),
+            "cache_age_seconds": round(cache_age, 1),
+            "cache_duration_seconds": self._cache_duration,
+            "cache_valid": cache_valid,
+            "cache_expires_in": round(self._cache_duration - cache_age, 1) if cache_valid else 0,
+            "last_updated": self._cache_timestamp
+        }
+        
+        return {"response": "Cache status retrieved", "status": status}
 
 # Global client instance for caching
 _global_client = None
@@ -518,6 +537,11 @@ async def get_all_tplink_status() -> Dict[str, Any]:
     """Get status of all TP-Link devices (including non-lights)"""
     client = _get_client()
     return await client.get_all_device_status()
+
+async def get_tplink_cache_status() -> Dict[str, Any]:
+    """Get the current TP-Link cache status"""
+    client = _get_client()
+    return await client.get_cache_status()
 
 async def get_tools() -> Dict[str, Any]:
     """Get a dictionary of all available tools"""

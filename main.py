@@ -98,6 +98,31 @@ def main():
     logger.info("Starting Streamlit application...")
     set_page_config()
     
+    # Initialize TP-Link device cache on startup
+    try:
+        from utils.actions import initialize_tplink_cache
+        import asyncio
+        # Run cache initialization in a separate thread to avoid blocking
+        def init_cache():
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                result = loop.run_until_complete(initialize_tplink_cache())
+                loop.close()
+                if result.get("status") == "success":
+                    logger.info("TP-Link cache initialized successfully")
+                else:
+                    logger.warning(f"TP-Link cache initialization warning: {result.get('message')}")
+            except Exception as e:
+                logger.error(f"Error initializing TP-Link cache: {e}")
+        
+        # Start cache initialization in background
+        import threading
+        cache_thread = threading.Thread(target=init_cache, daemon=True)
+        cache_thread.start()
+    except Exception as e:
+        logger.error(f"Error setting up TP-Link cache initialization: {e}")
+    
     # Display the logo, centered and resized to a specific height
     image_path = Path("images/the_gold_monkey_title.png")
     if image_path.exists():

@@ -138,5 +138,20 @@
     "cpu_percent": 0.0,
     "memory_mb": 0.0,
     "timestamp": "2025-07-05T05:33:20.418105"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 188.703125,
+    "timestamp": "2025-07-04T22:49:59.371320"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 33.28125,
+    "timestamp": "2025-07-04T22:50:52.618825"
+  },
+  {
+    "cpu_percent": 0.0,
+    "memory_mb": 33.28125,
+    "timestamp": "2025-07-04T22:54:02.436278"
   }
 ]

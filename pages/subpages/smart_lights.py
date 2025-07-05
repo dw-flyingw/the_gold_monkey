@@ -96,7 +96,7 @@ def show_light_control():
                 
                 # Brightness control
                 st.subheader("🌞 Brightness Control")
-                brightness = st.slider("Brightness", 0, 100, 50, key="brightness_slider")
+                brightness = st.slider("Brightness", 0, 100, 50, key="smart_lights_brightness_slider")
                 
                 if st.button("Set Brightness", key="set_brightness"):
                     try:
@@ -119,7 +119,7 @@ def show_light_control():
                 
                 selected_color = st.selectbox("Select Color", list(color_options.keys()), key="color_select")
                 
-                if st.button("Set Color", key="set_color"):
+                if st.button("Set Color", key="set_color_individual"):
                     try:
                         safe_async_call(control_tplink_lights, "set_color", color=color_options[selected_color], device=selected_light)
                         st.success(f"✅ {selected_light} color set to {selected_color}!")
@@ -130,7 +130,7 @@ def show_light_control():
                 st.subheader("🎨 Custom Color")
                 custom_color = st.color_picker("Choose Custom Color", "#ff0000", key="custom_color_picker")
                 
-                if st.button("Set Custom Color", key="set_custom_color"):
+                if st.button("Set Custom Color", key="set_custom_color_individual"):
                     try:
                         safe_async_call(control_tplink_lights, "set_color", color=custom_color, device=selected_light)
                         st.success(f"✅ {selected_light} custom color set!")
@@ -173,7 +173,7 @@ def show_light_control():
         
         selected_color = st.selectbox("Choose Color", list(color_options.keys()))
         
-        if st.button("🎨 Set Color", key="set_color"):
+        if st.button("🎨 Set Color", key="set_color_main"):
             with st.spinner(f"🦜 Setting color to {selected_color}..."):
                 try:
                     safe_async_call(control_tplink_lights, "set_color", color=color_options[selected_color], device=selected_light)
@@ -451,12 +451,46 @@ TP_LINK_DEVICE_IP: {'✅ Set' if os.getenv('TP_LINK_DEVICE_IP') else '❌ Not se
     st.markdown("---")
     st.subheader("🗄️ Cache Management")
     
-    if st.button("🔄 Rebuild Kasa Cache", key="rebuild_cache"):
+    cache_col1, cache_col2 = st.columns(2)
+    
+    with cache_col1:
+        st.write("**Cache Status:**")
         try:
-            safe_async_call(rebuild_kasa_cache)
-            st.success("✅ Kasa cache rebuilt successfully!")
+            from utils.actions import get_tplink_cache_status
+            cache_status = safe_async_call(get_tplink_cache_status)
+            
+            if "error" in cache_status:
+                st.write(f"• Status: Error - {cache_status['error']}")
+            else:
+                status = cache_status.get("status", {})
+                st.write(f"• Status: {'Active' if status.get('cache_valid', False) else 'Expired'}")
+                st.write(f"• Devices cached: {status.get('cached_devices', 0)}")
+                st.write(f"• Age: {status.get('cache_age_seconds', 0)}s")
+                st.write(f"• Duration: {status.get('cache_duration_seconds', 30)}s")
+                if status.get('cache_valid'):
+                    st.write(f"• Expires in: {status.get('cache_expires_in', 0)}s")
         except Exception as e:
-            st.error(f"❌ Error rebuilding cache: {e}")
+            st.write(f"• Status: Error - {e}")
+    
+    with cache_col2:
+        st.write("**Cache Actions:**")
+        if st.button("🔄 Rebuild Cache", key="rebuild_cache"):
+            try:
+                safe_async_call(rebuild_tplink_cache)
+                st.success("✅ Cache rebuilt successfully!")
+            except Exception as e:
+                st.error(f"❌ Error rebuilding cache: {e}")
+        
+        if st.button("📊 Show Cache Info", key="show_cache_info"):
+            try:
+                cache_status = safe_async_call(get_tplink_cache_status)
+                if "error" in cache_status:
+                    st.error(f"❌ Error getting cache info: {cache_status['error']}")
+                else:
+                    status = cache_status.get("status", {})
+                    st.info(f"Cache contains {status.get('cached_devices', 0)} devices, age: {status.get('cache_age_seconds', 0)}s, valid: {status.get('cache_valid', False)}")
+            except Exception as e:
+                st.error(f"❌ Error getting cache info: {e}")
 
 if __name__ == "__main__":
     show_smart_lights()
